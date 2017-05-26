@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.4.3">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2017-05-26T23:06:49+08:00</updated><id>http://localhost:4000/</id><title type="html">My blog</title><subtitle>都是骗人的
+</subtitle><entry><title type="html">语义分割笔记</title><link href="http://localhost:4000/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/2017/05/26/semantic-segmentation.html" rel="alternate" type="text/html" title="语义分割笔记" /><published>2017-05-26T10:00:42+08:00</published><updated>2017-05-26T10:00:42+08:00</updated><id>http://localhost:4000/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/2017/05/26/semantic-segmentation</id><content type="html" xml:base="http://localhost:4000/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/2017/05/26/semantic-segmentation.html">&lt;h1 id=&quot;语义分割笔记&quot;&gt;语义分割笔记&lt;/h1&gt;
+
+&lt;h3 id=&quot;image-caption为什么需要semantic-segmentation&quot;&gt;Image Caption为什么需要Semantic Segmentation&lt;/h3&gt;
+
+&lt;p&gt;一开始的网络只是把CNN的FC层直接输入RNN，但这个层里面的东西是难以解释的，但是RNN这么稀里糊涂的弄一弄就能描述出来图片了。这让人非常没有掌控感，于是后来Google有一篇论文就是讨论输入RNN的东西的可解释性是否对于Image caption有作用，一个很自然的想法是不仅要输入图像中的各项特征，而最好能把图像中的各个物体标注出来，将语义信息输入RNN。结果发现，输入可解释的信息大大提高了神经网络的表现。并不是稀里糊涂的一通训练就可以得到好的效果的。这篇论文非常具有启发性。一个创新之后，对这个创新中的局部进行优化，对局部之间的协作方式进行优化，对创新中说得不清晰或者不合理的部分敢于反思并探索，往往大的提升就在这些模糊的区域中了。接下来是几篇经典论文串讲，从最基础的AlexNet开始。&lt;/p&gt;
+
+&lt;h4 id=&quot;imagenet-classification-with-deep-convolutional-neural-networks&quot;&gt;ImageNet Classification with Deep Convolutional Neural Networks&lt;/h4&gt;
+
+&lt;p&gt;这篇论文开创了利用深度卷积神经网络进行图像识别的方法。也就是著名的AlexNet，结构如下图，5个卷积层，3个全连接层：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation/044A5076-2F92-4F13-BC6C-B16399096979.png&quot; alt=&quot;044A5076-2F92-4F13-BC6C-B16399096979&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;虽然AlexNet不是CNN的开创者，但他使用了许多技术使得CNN的识别能力大幅提高并已成为现在的标准配置，有&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;ReLU：没有饱和的问题，更快&lt;/li&gt;
+  &lt;li&gt;Overlapping Pooling，轻微改善，防止过拟合&lt;/li&gt;
+  &lt;li&gt;多GPU并行, 更快&lt;/li&gt;
+  &lt;li&gt;LRN，ReLU后的局部归一化，虽然ReLU对很大的X依然有效，但这样还是能改善一些&lt;/li&gt;
+  &lt;li&gt;减少过拟合：1）数据扩增，各种形态学变化之类的。 2）Dropout，方便好用，记得test的时乘上&lt;/li&gt;
+  &lt;li&gt;Weight Decay，感觉实际上就是正则项$\lambda$&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;接下来介绍如何用CNN作语义分割&lt;/p&gt;
+
+&lt;h4 id=&quot;fully-convolutional-networks-for-semantic-segmentation&quot;&gt;Fully Convolutional Networks for Semantic Segmentation&lt;/h4&gt;
+
+&lt;p&gt;这篇论文最早提出了全卷积网络的概念，想法其实很简单，CNN的输出是一维的向量，如果我们把最后面的FC层全都换成卷积层，就可以输出二维向量了，下图就是AlexNet卷积化后形成的全卷积网络：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation/AD9967C8-2C82-411F-9322-FCF3743CF1C4.png&quot; alt=&quot;AD9967C8-2C82-411F-9322-FCF3743CF1C4&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;而且因为FCN与CNN结构非常相似，任务也比较接近，可以利用CNN训练好的网络进行Fine tuning，节省训练时间。而且在计算卷积的时候因为receptive fields重叠的非常多，所以训练很高效（这里不是很懂。。）&lt;/p&gt;
+
+&lt;p&gt;但从图中可以看出，这样最终生成的图像是比原来小的，而语义分割需要得到与原图同样大小的图像，那怎么办呢？接着论文提出了upsampling，deconvolution（CS231n里讲这个名字被吐槽的很多，叫conv transpose之类的比较好）的技巧（本质就是插值）。Deconvolution实际上就是将卷积的正向传播和反向传播反过来。反向卷积能否学习对于表现没有明显提升，所以学习率被置零了。但deconvolution又带来了一个问题，就是分辨率的问题，很容易想象出来，好比一张小照片被放大了一样，非常模糊。为了解决这个问题，作者又提出了skip layer的方法，即将前面的卷积层与后面同样大小的反卷积层结合起来。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation/1705275F-792B-4BA4-8A47-72B219882490.png&quot; alt=&quot;1705275F-792B-4BA4-8A47-72B219882490&quot; /&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;deeplab-semantic-image-segmentation-withdeep-convolutional-nets-atrous-convolutionand-fully-connected-crfs&quot;&gt;DeepLab: Semantic Image Segmentation withDeep Convolutional Nets, Atrous Convolution,and Fully Connected CRFs&lt;/h3&gt;
+
+&lt;p&gt;这篇论文提出了使用DCNN实现语义分割的3个主要挑战&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;DCNN降低了特征的分辨率，而且为了保证图片不太小加入了100的padding，引入了噪声&lt;/li&gt;
+  &lt;li&gt;图片上存在着大小不一的物体&lt;/li&gt;
+  &lt;li&gt;图片特征在DCNN中的空间变化不变性导致的细节丢失（局部精确性与分类准确性的矛盾，上一篇论文使用了skip layer来处理这个问题）&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h5 id=&quot;第一个问题&quot;&gt;第一个问题&lt;/h5&gt;
+
+&lt;p&gt;作者首先更改了最后两层池化层，把pooling的stride改为1，同时加上1个padding，这样池化后像素的个数就不再改变了。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation/766fc04b86b72f7e09d8f8ff6cb648e2_r-1.png&quot; alt=&quot;766fc04b86b72f7e09d8f8ff6cb648e2_r&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;上图的a是原来的池化，b是更改后的池化，c是为了增加感受野带洞的卷积atrous conv。（&lt;strong&gt;==这里池化和卷积分的不太清楚，之后看下代码==&lt;/strong&gt;）为什么要带洞呢，是因为b图的感受野是比a要小的，可以看出b图中池化后的连续三个像素对应着池化前的5个，而a图则对应着7个。这会导致全局性的削弱。因此作者收到atrous算法的启发，加上了洞。在扩大分辨率的同时保持了感受野。更改后输出的预测图的大小是原来的4倍，下图直观展示了效果，下图是先将一张图片downsample为1/2，然后分别使用竖向高斯导数卷积核和atrous核，最后再upsampling，高斯核只能得到原图的1/4坐标的预测，而atrous核能得到全部像素的预测&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 上午11.05.02.png&quot; alt=&quot;屏幕快照 2017-05-26 上午11.05.02&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;atrous具体的实现方法有两种，一种是往卷积核里插0，一种是把图片subsample，然后再标准卷积&lt;/p&gt;
+
+&lt;p&gt;有一点要说一下，为什么不把池化层直接去掉呢？主要是因为去掉以后网络结构改变，没法使用训练好的网络fine tuning。因为图像识别的数据量比较大，网络训练的比较成熟，所以一般都希望能够借助其训练好的模型。&lt;/p&gt;
+
+&lt;h5 id=&quot;第二个问题&quot;&gt;第二个问题&lt;/h5&gt;
+
+&lt;p&gt;不同尺寸目标的问题。一个好的解决方案是对于不同尺寸分别做DCNN，但这样太慢了，所以作者用了ASPP，并行的使用多个rate不同的atrous conv，这些卷积核共享参数，所以训练快了很多。如下图所示。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation/431DA9CC-7296-4224-B087-6FD7482B8733.png&quot; alt=&quot;431DA9CC-7296-4224-B087-6FD7482B8733&quot; /&gt;&lt;/p&gt;
+
+&lt;h5 id=&quot;第三个问题&quot;&gt;第三个问题&lt;/h5&gt;
+
+&lt;p&gt;局部精确性与分类表现的矛盾问题。作者说有两种解决方法，一种就是利用多层网络中的信息来增强细节，如skip layers；另一种就是使用一些super-pixel（把像素划分成区域）表示，直接去底层获取信息，比如CRF&lt;/p&gt;
+
+&lt;p&gt;CRF的一个101http://blog.echen.me/2012/01/03/introduction-to-conditional-random-fields/（下面写了个3分钟版本的CRF感想，这个以后还有再系统学一下）&lt;/p&gt;
+
+&lt;p&gt;简单概括来说，CRF就是对于一个给定的全局观测，许多设定的特征函数，计算一个标签序列在这些特征函数下的得分，然后加权求和求得这个标签序列的得分。再将所有标签序列的得分Softmax归一化，作为该序列的概率。&lt;/p&gt;
+
+&lt;h4 id=&quot;-scorels--sigma_j1msigma_i1nlambda_jf_js-i-l_i-l_i-1-&quot;&gt;$ score(l|s) = \Sigma_{j=1}^{m}\Sigma_{i=1}^n\lambda_jf_j(s, i, l_i, l_{i-1}) $&lt;/h4&gt;
+
+&lt;h4 id=&quot;pls--fracexpscorelssigma_l-expscorels&quot;&gt;$p(l|s) = \frac{exp[score(l|s)]}{\Sigma_{l’} exp[score(l’|s)]}$&lt;/h4&gt;
+
+&lt;p&gt;$f_j$是特征函数，具体定义由问题决定（比如在词义分析中，可以定义为形容词后面是名词则$f$为1，否则为0），$l$是一个标签序列，这里的公式针对的是一维的情况，在图像标注中应该改成二维的，$l_{i-1}$在二维中对应着$i$的邻居节点的标签&lt;/p&gt;
+
+&lt;p&gt;要做的事情就是学习$\lambda_j$的值，这跟Logistics回归非常像，实际上这就是个时间序列版的logistics回归。一般目标是用最大似然估计来衡量学习。&lt;/p&gt;
+
+&lt;p&gt;每一个HMM（隐马尔科夫模型）都等价于一个CRF，就是说CRF比HMM更强。对HMM模型取对数之后吧概率对数看做权值，即化为CRF。这是因为CRF的特征函数具有更强的自由性，可以根据全局来定义特征函数，而HMM自身带有局部性，限制了其相应的特征函数。而且CRF可以使用任意权重，而HMM只能使用对数概率作为权重。&lt;/p&gt;
+
+&lt;p&gt;在这篇论文中，优化的目标是使下面这个函数最小&lt;/p&gt;
+
+&lt;h4 id=&quot;ex--sigma_itheta_ix_isigma_ijtheta_ijx_i-x_j&quot;&gt;$E(x) = \Sigma_i\theta_i(x_i)+\Sigma_{ij}\theta_{ij}(x_i, x_j)$&lt;/h4&gt;
+
+&lt;p&gt;$x_i$是第$i$个像素的标签，$\theta_i(x_i) = -log P(x_i)$，$P(x_i)$是第i个像素贴上$x_i$这个标签的概率（由DCNN算出来的），$\theta_{ij}(x_i, x_j)$是像素$i$像素$j$之间关系的度量&lt;/p&gt;
+
+&lt;h4 id=&quot;theta_ijx_i-x_j--mux_i-x_jw_1-exp-fracp_i-p_j22sigma_alpha2-fraci_i-i_j22sigma_beta2-----------------------------------w_2-exp-fracp_i-p_j22sigma_gamma2&quot;&gt;$\theta_{ij}(x_i, x_j) = \mu(x_i, x_j)[w_1\ exp(-\frac{||p_i-p_j||^2}{2\sigma_{\alpha}^2}-\frac{||I_i-I_j||^2}{2\sigma_{\beta}^2}) \\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ + w_2\ exp(-\frac{||p_i-p_j||^2}{2\sigma_{\gamma}^2})]$&lt;/h4&gt;
+
+&lt;p&gt;$\mu$在$x_i, x_j$相等的时候是0，不相等时是1（只会惩罚相同标签的像素），这就是个双边滤波……&lt;/p&gt;
+
+&lt;h5 id=&quot;实验中有启发的几个点&quot;&gt;实验中有启发的几个点&lt;/h5&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;learning rate使用poly策略比较好&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;batch size小一点（最后取了10），迭代次数多一点更有利于训练&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;在PASCAL-Person-Part上训练的时候LargeFOV和ASPP对于训练效果都没有提升，但CRF的提升效果非常明显。技术有适用性吧，No free lunch theory.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;从结果上来看CRF好像做了一些平滑和去噪的工作。（&lt;strong&gt;==对于CRF理解还不太到位，之前感觉像是起到精细化的作用，这里主要是双边滤波在起作用？==&lt;/strong&gt;）
+&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation/D93EE4D0-6893-45C5-B6D6-65E608C01E7B.png&quot; alt=&quot;D93EE4D0-6893-45C5-B6D6-65E608C01E7B&quot; /&gt;&lt;/p&gt;
+
+    &lt;p&gt;&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation/270A5970-D3CE-4C4D-86C0-86BC9E526AA3.png&quot; alt=&quot;270A5970-D3CE-4C4D-86C0-86BC9E526AA3&quot; /&gt;
+&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation/E19801B2-2B12-443A-BB57-C9786F9AFF16.png&quot; alt=&quot;E19801B2-2B12-443A-BB57-C9786F9AFF16&quot; /&gt;&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Cityscapes的图片非常大，作者一开始先缩小了一半再训练的，但后来发现用原始大小的图片训练能提高1.9%，效果很明显（但我感觉缩小一半对于细节的损失并不是很大因为原始图片有2048*1024，可能是因为训练量上升了？）。作者的处理方法是把原始图片分割成几张有重叠区域的图片再训练，训练好了拼起来。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Failure Modes，作者发现他们的模型难以抓住复杂的边界，如下图，甚至可能会被CRF完全抹掉，因为因为DCNN算出来的东西不够自信（零星、稀疏）。作者看好encoder-decoder结构能够解决这个问题
+&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation/E7E2AC8F-283B-4374-B92F-2928E8E0C857.png&quot; alt=&quot;E7E2AC8F-283B-4374-B92F-2928E8E0C857&quot; /&gt;&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&quot;faster-r-cnntowards-real-time-object-detection-with-region-proposal-networks&quot;&gt;Faster R-CNN:Towards Real-Time Object Detection with Region Proposal Networks&lt;/h3&gt;
+
+&lt;p&gt;目标检测近来的发展得益于region proposal methods和region-based convolutional nueral networks的成功。RPM负责给出粗略的语义分割，而R-CNN负责精细化的检测。Fast R-CNN已经得到了几乎实时的运行时间，而现在瓶颈就在于计算RPM，本文的目标就是使用RPN来突破该瓶颈，达到实时目标检测。这篇论文提出了RPN代替了常用的Region proposal methods,负责给出粗略的语义分割。&lt;/p&gt;
+
+&lt;p&gt;主要的原理是共享卷积层。作者们发现region-based detectors（比如Fast R-CNN）使用的卷积层产生的特征，也可以用来生成region proposals。&lt;/p&gt;
+
+&lt;h5 id=&quot;rpn的构建&quot;&gt;RPN的构建&lt;/h5&gt;
+
+&lt;p&gt;为了共享卷积，作者考察了ZF model（5层共享卷积）和SZ model（VGG，13层共享卷积层）&lt;/p&gt;
+
+&lt;p&gt;为了生成region proposals，作者在最后一个共享卷积层输出的特征层上做slide window。把一个window里的通过一个全连接层，生成一个低维向量。这个向量接着再被喂进两个平行的全连接层，分别用于矩形定位和矩形分类打分。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation/E31B36A8-B635-46F8-A51D-F7154C75DDC8.png&quot; alt=&quot;E31B36A8-B635-46F8-A51D-F7154C75DDC8&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;实际上这个slide window就是个卷积，后面的两层也是卷积层。对于每个window会提出k个region proposal。作者说这个方法有个很重要的属性是translation invariant（平移不变性，平移后仍能预测出相同大小的anchor boxes）。&lt;/p&gt;
+
+&lt;h5 id=&quot;rpn的学习过程&quot;&gt;RPN的学习过程&lt;/h5&gt;
+
+&lt;p&gt;有着最大IOU或与所有goud-truth box 的IOU都大于70%的anchor会被赋予正标签；&lt;/p&gt;
+
+&lt;p&gt;与所有ground-truth box的IOU都小于30%的anchor会被赋予负例；&lt;/p&gt;
+
+&lt;p&gt;其他的anchor不会对训练有贡献。Loss function如下&lt;/p&gt;
+
+&lt;h4 id=&quot;lp_i-t_i--frac1n_clssigma_il_clsp_i-p_i--lambda-frac1n_reg-sigma_i-p_i-l_regt_i-t_i&quot;&gt;$L(p_i, t_i) = \frac1{N_{cls}}\Sigma_iL_{cls}(p_i, p_i^&lt;em&gt;) + \lambda \frac1{N_{reg}} \Sigma_i p_i^&lt;/em&gt; L_{reg}(t_i, t_i^*)$&lt;/h4&gt;
+
+&lt;p&gt;i是anchor的index，$p_i$是anchor i被预测为是一个物体的概率，$p^&lt;em&gt;_i$是ground-truth（如果anchor是positive则为1，否则为0），$t_i$是表示box四个坐标的参数向量，$t^&lt;/em&gt;&lt;em&gt;I$是ground-truth。$L&lt;/em&gt;{cls}$是log loss（Softmax分类器)，$L_{reg}(t_i, t_i^&lt;em&gt;)=R(t_i - t_i^&lt;/em&gt;)$，$R$是robust loss function(smooth L1) (==&lt;strong&gt;这是啥&lt;/strong&gt;==)。因为$p^*_i$，第二项只有正例的时候才会起作用。$\lambda$是一个平衡系数。&lt;/p&gt;
+
+&lt;h5 id=&quot;优化&quot;&gt;优化&lt;/h5&gt;
+
+&lt;p&gt;每个mini-batch都来自于同一张图片，随机取128个正例和128个负例，如果不够128个正例，就用负例填上&lt;/p&gt;
+
+&lt;h5 id=&quot;共享卷积特征&quot;&gt;共享卷积特征&lt;/h5&gt;
+
+&lt;p&gt;共享卷积特征存在这一个困难，Fast R-CNN的训练是基于固定的region proposals的，所以没法直接训练联合模型。而且不知道联合训练是否能让共享卷积层收敛。所以作者提出了按如下步骤训练的方法。&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;训练RPN，用ImageNet预训练的模型fine-tune。&lt;/li&gt;
+  &lt;li&gt;训练Fast R-CNN，使用第1步中RPN生成的proposals，到现在为止没有共享卷积层&lt;/li&gt;
+  &lt;li&gt;用Fast R-CNN初始化RPN的训练，但是只fine-tune RPN自己的层，不更改共享的卷积层&lt;/li&gt;
+  &lt;li&gt;fine-tune Fast R-CNN的fc层，也不更改共享的卷积层&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;也就是说卷积层没被联合训练过。&lt;/p&gt;
+
+&lt;h5 id=&quot;实现细节&quot;&gt;实现细节&lt;/h5&gt;
+
+&lt;p&gt;许多RPN proposals高度重叠，作者使用了名为non-maximum suppression（NMS）的技术，NMS大大降低了proposal的数量而没有损害检测精度。&lt;/p&gt;
+
+&lt;h5 id=&quot;实验&quot;&gt;实验&lt;/h5&gt;
+
+&lt;p&gt;下面是几种技术对于结果的影响的比较&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 上午11.14.58.png&quot; alt=&quot;屏幕快照 2017-05-26 上午11.14.58&quot; /&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;deformable-convolutional-networks&quot;&gt;Deformable Convolutional Networks&lt;/h3&gt;
+
+&lt;p&gt;视觉识别中一个很大的问题在于图像的变形（角度、大小、姿势等）。以往的训练都是通过增加数据来使网络熟悉各种变形或使用一些形变时不变的特征（像是SIFT, scale invariant feature transform）。这篇论文提出CNN需要专门针对变形的结构才能较好的解决这个问题，因此提出了deformable convolution。&lt;/p&gt;
+
+&lt;h5 id=&quot;deformable-convolution&quot;&gt;Deformable Convolution&lt;/h5&gt;
+
+&lt;p&gt;基本思想是改变卷积层的核，原来核是一个方形，现在对于核中每个元素加上一个offset，卷积后的特征不再来源于一个方形，而可能来源于各种形状。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation//Users/wth/Desktop/沟通技巧/屏幕快照 2017-05-26 下午1.20.54.png&quot; alt=&quot;屏幕快照 2017-05-26 下午1.20.54&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;原来的卷积公式是这样子：&lt;/p&gt;
+
+&lt;h4 id=&quot;yp_0--sigma_p_n-wp_n-cdot-xp_0p_n&quot;&gt;$y(p_0) = \Sigma_{p_n} w(p_n) \cdot x(p_0+p_n)$&lt;/h4&gt;
+
+&lt;p&gt;加上偏移量$\Delta p_n$后变成这个样子：&lt;/p&gt;
+
+&lt;h4 id=&quot;yp_0--sigma_p_n-wp_n-cdot-xp_0p_n-delta-p_n&quot;&gt;$y(p_0) = \Sigma_{p_n} w(p_n) \cdot x(p_0+p_n+ \Delta p_n)$&lt;/h4&gt;
+
+&lt;p&gt;但因为偏移量常常是小数，所以要用双线性插值找到偏移后的坐标最接近的整数位置，公式略。&lt;/p&gt;
+
+&lt;h4 id=&quot;deformable-roi-pooling&quot;&gt;Deformable RoI Pooling&lt;/h4&gt;
+
+&lt;p&gt;RoI pooling是将一个任意大小的图片转化为固定大小输出的池化。池化函数是bin内的平均值。原始公式是&lt;/p&gt;
+
+&lt;h4 id=&quot;yij--sigma_p-xp_0--p--n_ij&quot;&gt;$y(i,j) = \Sigma_{p} x(p_0 + p) / n_{ij}$&lt;/h4&gt;
+
+&lt;p&gt;$p_0$是bin的左上角，p是枚举位置，$n_{ij}$是bin内的元素总数， 加上偏移量后&lt;/p&gt;
+
+&lt;h4 id=&quot;yij--sigma_p-xp_0--p-delta-p_ij--n_ij&quot;&gt;$y(i,j) = \Sigma_{p} x(p_0 + p +\Delta p_{ij}) / n_{ij}$&lt;/h4&gt;
+
+&lt;p&gt;偏移量的学习学习的是相对系数（图片大小的百分比），这样能够适用于不同大小的图片。&lt;/p&gt;
+
+&lt;p&gt;还可以扩展到position-sensitive RoI pooling，&lt;strong&gt;==（这里不太清楚，以后再看）==&lt;/strong&gt;&lt;/p&gt;
+
+&lt;h4 id=&quot;理解deformable-convnets&quot;&gt;理解Deformable ConvNets&lt;/h4&gt;
+
+&lt;p&gt;下图是使用了的deformable conv后感受野的变化&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 下午8.27.21.png&quot; alt=&quot;屏幕快照 2017-05-26 下午8.27.21&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;而且因为核具有自己调整的特性，可以轻松识别出不同scale的物体，下图展示了这一特性，每张图片中的红点是三层卷积对应的感受野，绿点是最高层的中心&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 下午8.30.40.png&quot; alt=&quot;屏幕快照 2017-05-26 下午8.30.40&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;对于RoI也是类似的效果，黄框的分数是由红框的平均值计算来的&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 下午8.30.49.png&quot; alt=&quot;屏幕快照 2017-05-26 下午8.30.49&quot; /&gt;&lt;/p&gt;
+
+&lt;h4 id=&quot;与相关工作的对比&quot;&gt;与相关工作的对比&lt;/h4&gt;
+
+&lt;p&gt;有几个有趣的点&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Effective Receptive Field这里提到，感受野虽然理论上随着层数线性增长，但实际上是成根号增长的，比预期的慢很多，因此即使是顶层的单元感受野也很小。因此Atrous Conv由于其有效增加感受野得到了广泛的应用&lt;/li&gt;
+  &lt;li&gt;之前也有动态filter的研究，但都只是值的变化而不是位置的变化&lt;/li&gt;
+  &lt;li&gt;当多层卷积结合起来以后，可能会有着跟deformable conv类似的效果，但存在着本质上的不同。经过复杂学习后得到的东西如果换一种思考方式就变得意外简单。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h4 id=&quot;实验-1&quot;&gt;实验&lt;/h4&gt;
+
+&lt;p&gt;几种网络应用了deformable conv后的效果比较：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 下午8.59.34.png&quot; alt=&quot;屏幕快照 2017-05-26 下午8.59.34&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;不知道为什么Faster R-CNN的提升效果最差（可能是RPN），而DeepLab应用6层deformable conv后效果反而变差了（猜测是感受野过大，容易分散，或在某些特征点收敛，过于集中，太关注于局部信息）&lt;/p&gt;
+
+&lt;h4 id=&quot;aligned-inception-resnet&quot;&gt;Aligned-Inception-ResNet&lt;/h4&gt;
+
+&lt;p&gt;&lt;strong&gt;==这个网络还需要学习一下==&lt;/strong&gt;&lt;/p&gt;
+
+&lt;h4 id=&quot;感想&quot;&gt;感想&lt;/h4&gt;
+
+&lt;p&gt;感觉这篇论文的想法非常秒，很优雅。在知乎上看到一句话，ALAN Huang说的，感觉非常有启发性&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;conv，pooling这种操作，其实可以分成三阶段： indexing（im2col） ，reduce(sum), reindexing（col2im). 在每一阶段都可以做一些事情。 用data driven的方式去学每一阶段的参数，也是近些年的主流方向。&lt;/p&gt;
+&lt;/blockquote&gt;</content><author><name></name></author><summary type="html">语义分割笔记</summary></entry><entry><title type="html">Welcome to Jekyll!</title><link href="http://localhost:4000/jekyll/update/2017/05/26/welcome-to-jekyll.html" rel="alternate" type="text/html" title="Welcome to Jekyll!" /><published>2017-05-26T00:27:42+08:00</published><updated>2017-05-26T00:27:42+08:00</updated><id>http://localhost:4000/jekyll/update/2017/05/26/welcome-to-jekyll</id><content type="html" xml:base="http://localhost:4000/jekyll/update/2017/05/26/welcome-to-jekyll.html">&lt;p&gt;You’ll find this post in your &lt;code class=&quot;highlighter-rouge&quot;&gt;_posts&lt;/code&gt; directory. Go ahead and edit it and re-build the site to see your changes. You can rebuild the site in many different ways, but the most common way is to run &lt;code class=&quot;highlighter-rouge&quot;&gt;jekyll serve&lt;/code&gt;, which launches a web server and auto-regenerates your site when a file is updated.&lt;/p&gt;
+
+&lt;p&gt;To add new posts, simply add a file in the &lt;code class=&quot;highlighter-rouge&quot;&gt;_posts&lt;/code&gt; directory that follows the convention &lt;code class=&quot;highlighter-rouge&quot;&gt;YYYY-MM-DD-name-of-post.ext&lt;/code&gt; and includes the necessary front matter. Take a look at the source for this post to get an idea about how it works.&lt;/p&gt;
+
+&lt;p&gt;Jekyll also offers powerful support for code snippets:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ruby&quot; data-lang=&quot;ruby&quot;&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;print_hi&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;nb&quot;&gt;puts&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;Hi, &lt;/span&gt;&lt;span class=&quot;si&quot;&gt;#{&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;print_hi&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'Tom'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;#=&amp;gt; prints 'Hi, Tom' to STDOUT.&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Check out the &lt;a href=&quot;https://jekyllrb.com/docs/home&quot;&gt;Jekyll docs&lt;/a&gt; for more info on how to get the most out of Jekyll. File all bugs/feature requests at &lt;a href=&quot;https://github.com/jekyll/jekyll&quot;&gt;Jekyll’s GitHub repo&lt;/a&gt;. If you have questions, you can ask them on &lt;a href=&quot;https://talk.jekyllrb.com/&quot;&gt;Jekyll Talk&lt;/a&gt;.&lt;/p&gt;</content><author><name></name></author><summary type="html">You’ll find this post in your _posts directory. Go ahead and edit it and re-build the site to see your changes. You can rebuild the site in many different ways, but the most common way is to run jekyll serve, which launches a web server and auto-regenerates your site when a file is updated.</summary></entry></feed>
