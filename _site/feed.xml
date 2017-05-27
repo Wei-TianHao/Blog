@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.4.3">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2017-05-27T10:12:21+08:00</updated><id>http://localhost:4000/</id><title type="html">My blog</title><subtitle>都是骗人的
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.4.3">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2017-05-27T10:23:50+08:00</updated><id>http://localhost:4000/</id><title type="html">My blog</title><subtitle>都是骗人的
 </subtitle><entry><title type="html">语义分割笔记</title><link href="http://localhost:4000/papers/2017/05/26/semantic-segmentation.html" rel="alternate" type="text/html" title="语义分割笔记" /><published>2017-05-26T10:00:42+08:00</published><updated>2017-05-26T10:00:42+08:00</updated><id>http://localhost:4000/papers/2017/05/26/semantic-segmentation</id><content type="html" xml:base="http://localhost:4000/papers/2017/05/26/semantic-segmentation.html">&lt;h1 id=&quot;语义分割笔记&quot;&gt;语义分割笔记&lt;/h1&gt;
 
 &lt;h3 id=&quot;image-caption为什么需要semantic-segmentation&quot;&gt;Image Caption为什么需要Semantic Segmentation&lt;/h3&gt;
@@ -72,9 +72,9 @@
 
 &lt;p&gt;简单概括来说，CRF就是对于一个给定的全局观测，许多设定的特征函数，计算一个标签序列在这些特征函数下的得分，然后加权求和求得这个标签序列的得分。再将所有标签序列的得分Softmax归一化，作为该序列的概率。&lt;/p&gt;
 
-&lt;h4 id=&quot;--scorels--sigma_j1msigma_i1nlambda_jf_js-i-l_i-l_i-1-&quot;&gt;$  score(l|s) = \Sigma_{j=1}^{m}\Sigma_{i=1}^n\lambda_jf_j(s, i, l_i, l_{i-1}) $&lt;/h4&gt;
+&lt;h4 id=&quot;scorels--sigma_j1msigma_i1nlambda_jf_js-i-l_i-l_i-1&quot;&gt;&lt;script type=&quot;math/tex&quot;&gt;score(l|s) = \Sigma_{j=1}^{m}\Sigma_{i=1}^n\lambda_jf_j(s, i, l_i, l_{i-1})&lt;/script&gt;&lt;/h4&gt;
 
-&lt;h4 id=&quot;--pls--fracexpscorelssigma_l-expscorels-&quot;&gt;$  p(l|s) = \frac{exp[score(l|s)]}{\Sigma_{l’} exp[score(l’|s)]} $&lt;/h4&gt;
+&lt;h4 id=&quot;pls--fracexpscorelssigma_l-expscorels&quot;&gt;&lt;script type=&quot;math/tex&quot;&gt;p(l|s) = \frac{exp[score(l|s)]}{\Sigma_{l'} exp[score(l'|s)]}&lt;/script&gt;&lt;/h4&gt;
 
 &lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;f_j&lt;/script&gt; 是特征函数，具体定义由问题决定（比如在词义分析中，可以定义为形容词后面是名词则&lt;script type=&quot;math/tex&quot;&gt;f&lt;/script&gt; 为1，否则为0），&lt;script type=&quot;math/tex&quot;&gt;l&lt;/script&gt; 是一个标签序列，这里的公式针对的是一维的情况，在图像标注中应该改成二维的，&lt;script type=&quot;math/tex&quot;&gt;l_{i-1}&lt;/script&gt; 在二维中对应着&lt;script type=&quot;math/tex&quot;&gt;i&lt;/script&gt; 的邻居节点的标签&lt;/p&gt;
 
@@ -84,11 +84,11 @@
 
 &lt;p&gt;在这篇论文中，优化的目标是使下面这个函数最小&lt;/p&gt;
 
-&lt;h4 id=&quot;-ex--sigma_itheta_ix_isigma_ijtheta_ijx_i-x_j&quot;&gt;$ E(x) = \Sigma_i\theta_i(x_i)+\Sigma_{ij}\theta_{ij}(x_i, x_j)$&lt;/h4&gt;
+&lt;h4 id=&quot;ex--sigma_itheta_ix_isigma_ijtheta_ijx_i-x_j&quot;&gt;&lt;script type=&quot;math/tex&quot;&gt;E(x) = \Sigma_i\theta_i(x_i)+\Sigma_{ij}\theta_{ij}(x_i, x_j)&lt;/script&gt;&lt;/h4&gt;
 
 &lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;x_i&lt;/script&gt; 是第&lt;script type=&quot;math/tex&quot;&gt;i&lt;/script&gt; 个像素的标签，&lt;script type=&quot;math/tex&quot;&gt;\theta_i(x_i) = -log P(x_i)&lt;/script&gt; ，&lt;script type=&quot;math/tex&quot;&gt;P(x_i)&lt;/script&gt; 是第i个像素贴上&lt;script type=&quot;math/tex&quot;&gt;x_i&lt;/script&gt; 这个标签的概率（由DCNN算出来的），&lt;script type=&quot;math/tex&quot;&gt;\theta_{ij}(x_i, x_j)&lt;/script&gt; 是像素&lt;script type=&quot;math/tex&quot;&gt;i&lt;/script&gt; 像素&lt;script type=&quot;math/tex&quot;&gt;j&lt;/script&gt; 之间关系的度量&lt;/p&gt;
 
-&lt;h4 id=&quot;-theta_ijx_i-x_j--mux_i-x_jw_1-exp-fracp_i-p_j22sigma_alpha2-fraci_i-i_j22sigma_beta2-----------------------------------w_2-exp-fracp_i-p_j22sigma_gamma2&quot;&gt;$ \theta_{ij}(x_i, x_j) = \mu(x_i, x_j)[w_1\ exp(-\frac{||p_i-p_j||^2}{2\sigma_{\alpha}^2}-\frac{||I_i-I_j||^2}{2\sigma_{\beta}^2}) \\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ + w_2\ exp(-\frac{||p_i-p_j||^2}{2\sigma_{\gamma}^2})]$&lt;/h4&gt;
+&lt;h4 id=&quot;theta_ijx_i-x_j--mux_i-x_jw_1-exp-fracp_i-p_j22sigma_alpha2-fraci_i-i_j22sigma_beta2-----------------------------------w_2-exp-fracp_i-p_j22sigma_gamma2&quot;&gt;&lt;script type=&quot;math/tex&quot;&gt;\theta_{ij}(x_i, x_j) = \mu(x_i, x_j)[w_1\ exp(-\frac{||p_i-p_j||^2}{2\sigma_{\alpha}^2}-\frac{||I_i-I_j||^2}{2\sigma_{\beta}^2}) \\\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ + w_2\ exp(-\frac{||p_i-p_j||^2}{2\sigma_{\gamma}^2})]&lt;/script&gt;&lt;/h4&gt;
 
 &lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;\mu&lt;/script&gt; 在&lt;script type=&quot;math/tex&quot;&gt;x_i, x_j&lt;/script&gt; 相等的时候是0，不相等时是1（只会惩罚相同标签的像素），这就是个双边滤波……&lt;/p&gt;
 
@@ -144,7 +144,7 @@
 
 &lt;p&gt;其他的anchor不会对训练有贡献。Loss function如下&lt;/p&gt;
 
-&lt;h4 id=&quot;-lp_i-t_i--frac1n_clssigma_il_clsp_i-p_i--lambda-frac1n_reg-sigma_i-p_i-l_regt_i-t_i&quot;&gt;$ L(p_i, t_i) = \frac1{N_{cls}}\Sigma_iL_{cls}(p_i, p_i^&lt;em&gt;) + \lambda \frac1{N_{reg}} \Sigma_i p_i^&lt;/em&gt; L_{reg}(t_i, t_i^*)$&lt;/h4&gt;
+&lt;h4 id=&quot;lp_i-t_i--frac1n_clssigma_il_clsp_i-p_i--lambda-frac1n_reg-sigma_i-p_i-l_regt_i-t_i&quot;&gt;&lt;script type=&quot;math/tex&quot;&gt;L(p_i, t_i) = \frac1{N_{cls}}\Sigma_iL_{cls}(p_i, p_i^*) + \lambda \frac1{N_{reg}} \Sigma_i p_i^* L_{reg}(t_i, t_i^*)&lt;/script&gt;&lt;/h4&gt;
 
 &lt;p&gt;i是anchor的index，&lt;script type=&quot;math/tex&quot;&gt;p_i&lt;/script&gt; 是anchor i被预测为是一个物体的概率，&lt;script type=&quot;math/tex&quot;&gt;p^*_i&lt;/script&gt; 是ground-truth（如果anchor是positive则为1，否则为0），&lt;script type=&quot;math/tex&quot;&gt;t_i&lt;/script&gt; 是表示box四个坐标的参数向量，&lt;script type=&quot;math/tex&quot;&gt;t^*_I&lt;/script&gt; 是ground-truth。&lt;script type=&quot;math/tex&quot;&gt;L_{cls}&lt;/script&gt; 是log loss（Softmax分类器)，&lt;script type=&quot;math/tex&quot;&gt;L_{reg}(t_i, t_i^*)=R(t_i - t_i^*)&lt;/script&gt; ，&lt;script type=&quot;math/tex&quot;&gt;R&lt;/script&gt; 是robust loss function(smooth L1) (==&lt;strong&gt;这是啥&lt;/strong&gt;==)。因为&lt;script type=&quot;math/tex&quot;&gt;p^*_i&lt;/script&gt; ，第二项只有正例的时候才会起作用。&lt;script type=&quot;math/tex&quot;&gt;\lambda&lt;/script&gt; 是一个平衡系数。&lt;/p&gt;
 
@@ -183,15 +183,15 @@
 
 &lt;p&gt;基本思想是改变卷积层的核，原来核是一个方形，现在对于核中每个元素加上一个offset，卷积后的特征不再来源于一个方形，而可能来源于各种形状。&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&quot;/assets/2017-05-26-semantic-segmentation//Users/wth/Desktop/沟通技巧/屏幕快照 2017-05-26 下午1.20.54.png&quot; alt=&quot;屏幕快照 2017-05-26 下午1.20.54&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/assets/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 下午1.20.54.png&quot; alt=&quot;屏幕快照 2017-05-26 下午1.20.54&quot; /&gt;&lt;/p&gt;
 
 &lt;p&gt;原来的卷积公式是这样子：&lt;/p&gt;
 
-&lt;h4 id=&quot;-yp_0--sigma_p_n-wp_n-cdot-xp_0p_n&quot;&gt;$ y(p_0) = \Sigma_{p_n} w(p_n) \cdot x(p_0+p_n)$&lt;/h4&gt;
+&lt;h4 id=&quot;yp_0--sigma_p_n-wp_n-cdot-xp_0p_n&quot;&gt;&lt;script type=&quot;math/tex&quot;&gt;y(p_0) = \Sigma_{p_n} w(p_n) \cdot x(p_0+p_n)&lt;/script&gt;&lt;/h4&gt;
 
 &lt;p&gt;加上偏移量&lt;script type=&quot;math/tex&quot;&gt;\Delta p_n&lt;/script&gt; 后变成这个样子：&lt;/p&gt;
 
-&lt;h4 id=&quot;-yp_0--sigma_p_n-wp_n-cdot-xp_0p_n-delta-p_n&quot;&gt;$ y(p_0) = \Sigma_{p_n} w(p_n) \cdot x(p_0+p_n+ \Delta p_n)$&lt;/h4&gt;
+&lt;h4 id=&quot;yp_0--sigma_p_n-wp_n-cdot-xp_0p_n-delta-p_n&quot;&gt;&lt;script type=&quot;math/tex&quot;&gt;y(p_0) = \Sigma_{p_n} w(p_n) \cdot x(p_0+p_n+ \Delta p_n)&lt;/script&gt;&lt;/h4&gt;
 
 &lt;p&gt;但因为偏移量常常是小数，所以要用双线性插值找到偏移后的坐标最接近的整数位置，公式略。&lt;/p&gt;
 
@@ -199,11 +199,11 @@
 
 &lt;p&gt;RoI pooling是将一个任意大小的图片转化为固定大小输出的池化。池化函数是bin内的平均值。原始公式是&lt;/p&gt;
 
-&lt;h4 id=&quot;-yij--sigma_p-xp_0--p--n_ij&quot;&gt;$ y(i,j) = \Sigma_{p} x(p_0 + p) / n_{ij}$&lt;/h4&gt;
+&lt;h4 id=&quot;yij--sigma_p-xp_0--p--n_ij&quot;&gt;&lt;script type=&quot;math/tex&quot;&gt;y(i,j) = \Sigma_{p} x(p_0 + p) / n_{ij}&lt;/script&gt;&lt;/h4&gt;
 
 &lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;p_0&lt;/script&gt; 是bin的左上角，p是枚举位置，&lt;script type=&quot;math/tex&quot;&gt;n_{ij}&lt;/script&gt; 是bin内的元素总数， 加上偏移量后&lt;/p&gt;
 
-&lt;h4 id=&quot;-yij--sigma_p-xp_0--p-delta-p_ij--n_ij&quot;&gt;$ y(i,j) = \Sigma_{p} x(p_0 + p +\Delta p_{ij}) / n_{ij}$&lt;/h4&gt;
+&lt;h4 id=&quot;yij--sigma_p-xp_0--p-delta-p_ij--n_ij&quot;&gt;&lt;script type=&quot;math/tex&quot;&gt;y(i,j) = \Sigma_{p} x(p_0 + p +\Delta p_{ij}) / n_{ij}&lt;/script&gt;&lt;/h4&gt;
 
 &lt;p&gt;偏移量的学习学习的是相对系数（图片大小的百分比），这样能够适用于不同大小的图片。&lt;/p&gt;
 
