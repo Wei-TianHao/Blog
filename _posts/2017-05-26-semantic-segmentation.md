@@ -27,7 +27,7 @@ categories: papers
 3. 多GPU并行, 更快
 4. LRN，ReLU后的局部归一化，虽然ReLU对很大的X依然有效，但这样还是能改善一些
 5. 减少过拟合：1）数据扩增，各种形态学变化之类的。 2）Dropout，方便好用，记得test的时乘上
-6. Weight Decay，感觉实际上就是正则项$\lambda$
+6. Weight Decay，感觉实际上就是正则项$$ \lambda$$ 
 
 接下来介绍如何用CNN作语义分割
 
@@ -81,25 +81,25 @@ CRF的一个101http://blog.echen.me/2012/01/03/introduction-to-conditional-rando
 
 简单概括来说，CRF就是对于一个给定的全局观测，许多设定的特征函数，计算一个标签序列在这些特征函数下的得分，然后加权求和求得这个标签序列的得分。再将所有标签序列的得分Softmax归一化，作为该序列的概率。
 
-#### $ score(l|s) = \Sigma_{j=1}^{m}\Sigma_{i=1}^n\lambda_jf_j(s, i, l_i, l_{i-1}) $
+#### $  score(l|s) = \Sigma_{j=1}^{m}\Sigma_{i=1}^n\lambda_jf_j(s, i, l_i, l_{i-1}) $ 
 
-#### $p(l|s) = \frac{exp[score(l|s)]}{\Sigma_{l'} exp[score(l'|s)]}$
+#### $  p(l|s) = \frac{exp[score(l|s)]}{\Sigma_{l'} exp[score(l'|s)]} $ 
 
-$f_j$是特征函数，具体定义由问题决定（比如在词义分析中，可以定义为形容词后面是名词则$f$为1，否则为0），$l$是一个标签序列，这里的公式针对的是一维的情况，在图像标注中应该改成二维的，$l_{i-1}$在二维中对应着$i$的邻居节点的标签
+$$ f_j$$ 是特征函数，具体定义由问题决定（比如在词义分析中，可以定义为形容词后面是名词则$$ f$$ 为1，否则为0），$$ l$$ 是一个标签序列，这里的公式针对的是一维的情况，在图像标注中应该改成二维的，$$ l_{i-1}$$ 在二维中对应着$$ i$$ 的邻居节点的标签
 
-要做的事情就是学习$\lambda_j$的值，这跟Logistics回归非常像，实际上这就是个时间序列版的logistics回归。一般目标是用最大似然估计来衡量学习。
+要做的事情就是学习$$ \lambda_j$$ 的值，这跟Logistics回归非常像，实际上这就是个时间序列版的logistics回归。一般目标是用最大似然估计来衡量学习。
 
 每一个HMM（隐马尔科夫模型）都等价于一个CRF，就是说CRF比HMM更强。对HMM模型取对数之后吧概率对数看做权值，即化为CRF。这是因为CRF的特征函数具有更强的自由性，可以根据全局来定义特征函数，而HMM自身带有局部性，限制了其相应的特征函数。而且CRF可以使用任意权重，而HMM只能使用对数概率作为权重。
 
 在这篇论文中，优化的目标是使下面这个函数最小
 
-#### $E(x) = \Sigma_i\theta_i(x_i)+\Sigma_{ij}\theta_{ij}(x_i, x_j)$
+#### $ E(x) = \Sigma_i\theta_i(x_i)+\Sigma_{ij}\theta_{ij}(x_i, x_j)$ 
 
-$x_i$是第$i$个像素的标签，$\theta_i(x_i) = -log P(x_i)$，$P(x_i)$是第i个像素贴上$x_i$这个标签的概率（由DCNN算出来的），$\theta_{ij}(x_i, x_j)$是像素$i$像素$j$之间关系的度量
+$$ x_i$$ 是第$$ i$$ 个像素的标签，$$ \theta_i(x_i) = -log P(x_i)$$ ，$$ P(x_i)$$ 是第i个像素贴上$$ x_i$$ 这个标签的概率（由DCNN算出来的），$$ \theta_{ij}(x_i, x_j)$$ 是像素$$ i$$ 像素$$ j$$ 之间关系的度量
 
-#### $\theta_{ij}(x_i, x_j) = \mu(x_i, x_j)[w_1\ exp(-\frac{||p_i-p_j||^2}{2\sigma_{\alpha}^2}-\frac{||I_i-I_j||^2}{2\sigma_{\beta}^2}) \\\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ + w_2\ exp(-\frac{||p_i-p_j||^2}{2\sigma_{\gamma}^2})]$
+#### $ \theta_{ij}(x_i, x_j) = \mu(x_i, x_j)[w_1\ exp(-\frac{||p_i-p_j||^2}{2\sigma_{\alpha}^2}-\frac{||I_i-I_j||^2}{2\sigma_{\beta}^2}) \\\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ + w_2\ exp(-\frac{||p_i-p_j||^2}{2\sigma_{\gamma}^2})]$ 
 
-$\mu$在$x_i, x_j$相等的时候是0，不相等时是1（只会惩罚相同标签的像素），这就是个双边滤波……
+$$ \mu$$ 在$$ x_i, x_j$$ 相等的时候是0，不相等时是1（只会惩罚相同标签的像素），这就是个双边滤波……
 
 ##### 实验中有启发的几个点
 
@@ -146,9 +146,9 @@ $\mu$在$x_i, x_j$相等的时候是0，不相等时是1（只会惩罚相同标
 
 其他的anchor不会对训练有贡献。Loss function如下
 
-#### $L(p_i, t_i) = \frac1{N_{cls}}\Sigma_iL_{cls}(p_i, p_i^*) + \lambda \frac1{N_{reg}} \Sigma_i p_i^* L_{reg}(t_i, t_i^*)$
+#### $ L(p_i, t_i) = \frac1{N_{cls}}\Sigma_iL_{cls}(p_i, p_i^*) + \lambda \frac1{N_{reg}} \Sigma_i p_i^* L_{reg}(t_i, t_i^*)$ 
 
-i是anchor的index，$p_i$是anchor i被预测为是一个物体的概率，$p^*_i$是ground-truth（如果anchor是positive则为1，否则为0），$t_i$是表示box四个坐标的参数向量，$t^*_I$是ground-truth。$L_{cls}$是log loss（Softmax分类器)，$L_{reg}(t_i, t_i^*)=R(t_i - t_i^*)$，$R$是robust loss function(smooth L1) (==**这是啥**==)。因为$p^*_i$，第二项只有正例的时候才会起作用。$\lambda$是一个平衡系数。
+i是anchor的index，$$ p_i$$ 是anchor i被预测为是一个物体的概率，$$ p^*_i$$ 是ground-truth（如果anchor是positive则为1，否则为0），$$ t_i$$ 是表示box四个坐标的参数向量，$$ t^*_I$$ 是ground-truth。$$ L_{cls}$$ 是log loss（Softmax分类器)，$$ L_{reg}(t_i, t_i^*)=R(t_i - t_i^*)$$ ，$$ R$$ 是robust loss function(smooth L1) (==**这是啥**==)。因为$$ p^*_i$$ ，第二项只有正例的时候才会起作用。$$ \lambda$$ 是一个平衡系数。
 
 ##### 优化
 
@@ -189,11 +189,11 @@ i是anchor的index，$p_i$是anchor i被预测为是一个物体的概率，$p^*
 
 原来的卷积公式是这样子：
 
-#### $y(p_0) = \Sigma_{p_n} w(p_n) \cdot x(p_0+p_n)$
+#### $ y(p_0) = \Sigma_{p_n} w(p_n) \cdot x(p_0+p_n)$ 
 
-加上偏移量$\Delta p_n$后变成这个样子：
+加上偏移量$$ \Delta p_n$$ 后变成这个样子：
 
-#### $y(p_0) = \Sigma_{p_n} w(p_n) \cdot x(p_0+p_n+ \Delta p_n)$
+#### $ y(p_0) = \Sigma_{p_n} w(p_n) \cdot x(p_0+p_n+ \Delta p_n)$ 
 
 但因为偏移量常常是小数，所以要用双线性插值找到偏移后的坐标最接近的整数位置，公式略。
 
@@ -201,11 +201,11 @@ i是anchor的index，$p_i$是anchor i被预测为是一个物体的概率，$p^*
 
 RoI pooling是将一个任意大小的图片转化为固定大小输出的池化。池化函数是bin内的平均值。原始公式是
 
-#### $y(i,j) = \Sigma_{p} x(p_0 + p) / n_{ij}$
+#### $ y(i,j) = \Sigma_{p} x(p_0 + p) / n_{ij}$ 
 
-$p_0$是bin的左上角，p是枚举位置，$n_{ij}$是bin内的元素总数， 加上偏移量后
+$$ p_0$$ 是bin的左上角，p是枚举位置，$$ n_{ij}$$ 是bin内的元素总数， 加上偏移量后
 
-#### $y(i,j) = \Sigma_{p} x(p_0 + p +\Delta p_{ij}) / n_{ij}$
+#### $ y(i,j) = \Sigma_{p} x(p_0 + p +\Delta p_{ij}) / n_{ij}$ 
 
 偏移量的学习学习的是相对系数（图片大小的百分比），这样能够适用于不同大小的图片。
 
