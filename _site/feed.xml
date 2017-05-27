@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.4.3">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2017-05-26T23:06:49+08:00</updated><id>http://localhost:4000/</id><title type="html">My blog</title><subtitle>都是骗人的
-</subtitle><entry><title type="html">语义分割笔记</title><link href="http://localhost:4000/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/2017/05/26/semantic-segmentation.html" rel="alternate" type="text/html" title="语义分割笔记" /><published>2017-05-26T10:00:42+08:00</published><updated>2017-05-26T10:00:42+08:00</updated><id>http://localhost:4000/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/2017/05/26/semantic-segmentation</id><content type="html" xml:base="http://localhost:4000/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/2017/05/26/semantic-segmentation.html">&lt;h1 id=&quot;语义分割笔记&quot;&gt;语义分割笔记&lt;/h1&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.4.3">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2017-05-27T09:36:11+08:00</updated><id>http://localhost:4000/</id><title type="html">My blog</title><subtitle>都是骗人的
+</subtitle><entry><title type="html">语义分割笔记</title><link href="http://localhost:4000/papers/2017/05/26/semantic-segmentation.html" rel="alternate" type="text/html" title="语义分割笔记" /><published>2017-05-26T10:00:42+08:00</published><updated>2017-05-26T10:00:42+08:00</updated><id>http://localhost:4000/papers/2017/05/26/semantic-segmentation</id><content type="html" xml:base="http://localhost:4000/papers/2017/05/26/semantic-segmentation.html">&lt;h1 id=&quot;语义分割笔记&quot;&gt;语义分割笔记&lt;/h1&gt;
 
 &lt;h3 id=&quot;image-caption为什么需要semantic-segmentation&quot;&gt;Image Caption为什么需要Semantic Segmentation&lt;/h3&gt;
 
@@ -9,7 +9,7 @@
 
 &lt;p&gt;这篇论文开创了利用深度卷积神经网络进行图像识别的方法。也就是著名的AlexNet，结构如下图，5个卷积层，3个全连接层：&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation/044A5076-2F92-4F13-BC6C-B16399096979.png&quot; alt=&quot;044A5076-2F92-4F13-BC6C-B16399096979&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/assets/2017-05-26-semantic-segmentation/044A5076-2F92-4F13-BC6C-B16399096979.png&quot; alt=&quot;044A5076-2F92-4F13-BC6C-B16399096979&quot; /&gt;&lt;/p&gt;
 
 &lt;p&gt;虽然AlexNet不是CNN的开创者，但他使用了许多技术使得CNN的识别能力大幅提高并已成为现在的标准配置，有&lt;/p&gt;
 
@@ -28,13 +28,13 @@
 
 &lt;p&gt;这篇论文最早提出了全卷积网络的概念，想法其实很简单，CNN的输出是一维的向量，如果我们把最后面的FC层全都换成卷积层，就可以输出二维向量了，下图就是AlexNet卷积化后形成的全卷积网络：&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation/AD9967C8-2C82-411F-9322-FCF3743CF1C4.png&quot; alt=&quot;AD9967C8-2C82-411F-9322-FCF3743CF1C4&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/assets/2017-05-26-semantic-segmentation/AD9967C8-2C82-411F-9322-FCF3743CF1C4.png&quot; alt=&quot;AD9967C8-2C82-411F-9322-FCF3743CF1C4&quot; /&gt;&lt;/p&gt;
 
 &lt;p&gt;而且因为FCN与CNN结构非常相似，任务也比较接近，可以利用CNN训练好的网络进行Fine tuning，节省训练时间。而且在计算卷积的时候因为receptive fields重叠的非常多，所以训练很高效（这里不是很懂。。）&lt;/p&gt;
 
 &lt;p&gt;但从图中可以看出，这样最终生成的图像是比原来小的，而语义分割需要得到与原图同样大小的图像，那怎么办呢？接着论文提出了upsampling，deconvolution（CS231n里讲这个名字被吐槽的很多，叫conv transpose之类的比较好）的技巧（本质就是插值）。Deconvolution实际上就是将卷积的正向传播和反向传播反过来。反向卷积能否学习对于表现没有明显提升，所以学习率被置零了。但deconvolution又带来了一个问题，就是分辨率的问题，很容易想象出来，好比一张小照片被放大了一样，非常模糊。为了解决这个问题，作者又提出了skip layer的方法，即将前面的卷积层与后面同样大小的反卷积层结合起来。&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation/1705275F-792B-4BA4-8A47-72B219882490.png&quot; alt=&quot;1705275F-792B-4BA4-8A47-72B219882490&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/assets/2017-05-26-semantic-segmentation/1705275F-792B-4BA4-8A47-72B219882490.png&quot; alt=&quot;1705275F-792B-4BA4-8A47-72B219882490&quot; /&gt;&lt;/p&gt;
 
 &lt;h3 id=&quot;deeplab-semantic-image-segmentation-withdeep-convolutional-nets-atrous-convolutionand-fully-connected-crfs&quot;&gt;DeepLab: Semantic Image Segmentation withDeep Convolutional Nets, Atrous Convolution,and Fully Connected CRFs&lt;/h3&gt;
 
@@ -50,9 +50,9 @@
 
 &lt;p&gt;作者首先更改了最后两层池化层，把pooling的stride改为1，同时加上1个padding，这样池化后像素的个数就不再改变了。&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation/766fc04b86b72f7e09d8f8ff6cb648e2_r-1.png&quot; alt=&quot;766fc04b86b72f7e09d8f8ff6cb648e2_r&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/assets/2017-05-26-semantic-segmentation/766fc04b86b72f7e09d8f8ff6cb648e2_r-1.png&quot; alt=&quot;766fc04b86b72f7e09d8f8ff6cb648e2_r&quot; /&gt;&lt;/p&gt;
 
-&lt;p&gt;上图的a是原来的池化，b是更改后的池化，c是为了增加感受野带洞的卷积atrous conv。（&lt;strong&gt;==这里池化和卷积分的不太清楚，之后看下代码==&lt;/strong&gt;）为什么要带洞呢，是因为b图的感受野是比a要小的，可以看出b图中池化后的连续三个像素对应着池化前的5个，而a图则对应着7个。这会导致全局性的削弱。因此作者收到atrous算法的启发，加上了洞。在扩大分辨率的同时保持了感受野。更改后输出的预测图的大小是原来的4倍，下图直观展示了效果，下图是先将一张图片downsample为1/2，然后分别使用竖向高斯导数卷积核和atrous核，最后再upsampling，高斯核只能得到原图的1/4坐标的预测，而atrous核能得到全部像素的预测&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 上午11.05.02.png&quot; alt=&quot;屏幕快照 2017-05-26 上午11.05.02&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;上图的a是原来的池化，b是更改后的池化，c是为了增加感受野带洞的卷积atrous conv。（&lt;strong&gt;==这里池化和卷积分的不太清楚，之后看下代码==&lt;/strong&gt;）为什么要带洞呢，是因为b图的感受野是比a要小的，可以看出b图中池化后的连续三个像素对应着池化前的5个，而a图则对应着7个。这会导致全局性的削弱。因此作者收到atrous算法的启发，加上了洞。在扩大分辨率的同时保持了感受野。更改后输出的预测图的大小是原来的4倍，下图直观展示了效果，下图是先将一张图片downsample为1/2，然后分别使用竖向高斯导数卷积核和atrous核，最后再upsampling，高斯核只能得到原图的1/4坐标的预测，而atrous核能得到全部像素的预测&lt;img src=&quot;/assets/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 上午11.05.02.png&quot; alt=&quot;屏幕快照 2017-05-26 上午11.05.02&quot; /&gt;&lt;/p&gt;
 
 &lt;p&gt;atrous具体的实现方法有两种，一种是往卷积核里插0，一种是把图片subsample，然后再标准卷积&lt;/p&gt;
 
@@ -62,7 +62,7 @@
 
 &lt;p&gt;不同尺寸目标的问题。一个好的解决方案是对于不同尺寸分别做DCNN，但这样太慢了，所以作者用了ASPP，并行的使用多个rate不同的atrous conv，这些卷积核共享参数，所以训练快了很多。如下图所示。&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation/431DA9CC-7296-4224-B087-6FD7482B8733.png&quot; alt=&quot;431DA9CC-7296-4224-B087-6FD7482B8733&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/assets/2017-05-26-semantic-segmentation/431DA9CC-7296-4224-B087-6FD7482B8733.png&quot; alt=&quot;431DA9CC-7296-4224-B087-6FD7482B8733&quot; /&gt;&lt;/p&gt;
 
 &lt;h5 id=&quot;第三个问题&quot;&gt;第三个问题&lt;/h5&gt;
 
@@ -106,17 +106,17 @@
   &lt;/li&gt;
   &lt;li&gt;
     &lt;p&gt;从结果上来看CRF好像做了一些平滑和去噪的工作。（&lt;strong&gt;==对于CRF理解还不太到位，之前感觉像是起到精细化的作用，这里主要是双边滤波在起作用？==&lt;/strong&gt;）
-&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation/D93EE4D0-6893-45C5-B6D6-65E608C01E7B.png&quot; alt=&quot;D93EE4D0-6893-45C5-B6D6-65E608C01E7B&quot; /&gt;&lt;/p&gt;
+&lt;img src=&quot;/assets/2017-05-26-semantic-segmentation/D93EE4D0-6893-45C5-B6D6-65E608C01E7B.png&quot; alt=&quot;D93EE4D0-6893-45C5-B6D6-65E608C01E7B&quot; /&gt;&lt;/p&gt;
 
-    &lt;p&gt;&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation/270A5970-D3CE-4C4D-86C0-86BC9E526AA3.png&quot; alt=&quot;270A5970-D3CE-4C4D-86C0-86BC9E526AA3&quot; /&gt;
-&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation/E19801B2-2B12-443A-BB57-C9786F9AFF16.png&quot; alt=&quot;E19801B2-2B12-443A-BB57-C9786F9AFF16&quot; /&gt;&lt;/p&gt;
+    &lt;p&gt;&lt;img src=&quot;/assets/2017-05-26-semantic-segmentation/270A5970-D3CE-4C4D-86C0-86BC9E526AA3.png&quot; alt=&quot;270A5970-D3CE-4C4D-86C0-86BC9E526AA3&quot; /&gt;
+&lt;img src=&quot;/assets/2017-05-26-semantic-segmentation/E19801B2-2B12-443A-BB57-C9786F9AFF16.png&quot; alt=&quot;E19801B2-2B12-443A-BB57-C9786F9AFF16&quot; /&gt;&lt;/p&gt;
   &lt;/li&gt;
   &lt;li&gt;
     &lt;p&gt;Cityscapes的图片非常大，作者一开始先缩小了一半再训练的，但后来发现用原始大小的图片训练能提高1.9%，效果很明显（但我感觉缩小一半对于细节的损失并不是很大因为原始图片有2048*1024，可能是因为训练量上升了？）。作者的处理方法是把原始图片分割成几张有重叠区域的图片再训练，训练好了拼起来。&lt;/p&gt;
   &lt;/li&gt;
   &lt;li&gt;
     &lt;p&gt;Failure Modes，作者发现他们的模型难以抓住复杂的边界，如下图，甚至可能会被CRF完全抹掉，因为因为DCNN算出来的东西不够自信（零星、稀疏）。作者看好encoder-decoder结构能够解决这个问题
-&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation/E7E2AC8F-283B-4374-B92F-2928E8E0C857.png&quot; alt=&quot;E7E2AC8F-283B-4374-B92F-2928E8E0C857&quot; /&gt;&lt;/p&gt;
+&lt;img src=&quot;/assets/2017-05-26-semantic-segmentation/E7E2AC8F-283B-4374-B92F-2928E8E0C857.png&quot; alt=&quot;E7E2AC8F-283B-4374-B92F-2928E8E0C857&quot; /&gt;&lt;/p&gt;
   &lt;/li&gt;
 &lt;/ol&gt;
 
@@ -132,7 +132,7 @@
 
 &lt;p&gt;为了生成region proposals，作者在最后一个共享卷积层输出的特征层上做slide window。把一个window里的通过一个全连接层，生成一个低维向量。这个向量接着再被喂进两个平行的全连接层，分别用于矩形定位和矩形分类打分。&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation/E31B36A8-B635-46F8-A51D-F7154C75DDC8.png&quot; alt=&quot;E31B36A8-B635-46F8-A51D-F7154C75DDC8&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/assets/2017-05-26-semantic-segmentation/E31B36A8-B635-46F8-A51D-F7154C75DDC8.png&quot; alt=&quot;E31B36A8-B635-46F8-A51D-F7154C75DDC8&quot; /&gt;&lt;/p&gt;
 
 &lt;p&gt;实际上这个slide window就是个卷积，后面的两层也是卷积层。对于每个window会提出k个region proposal。作者说这个方法有个很重要的属性是translation invariant（平移不变性，平移后仍能预测出相同大小的anchor boxes）。&lt;/p&gt;
 
@@ -173,7 +173,7 @@
 
 &lt;p&gt;下面是几种技术对于结果的影响的比较&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 上午11.14.58.png&quot; alt=&quot;屏幕快照 2017-05-26 上午11.14.58&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/assets/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 上午11.14.58.png&quot; alt=&quot;屏幕快照 2017-05-26 上午11.14.58&quot; /&gt;&lt;/p&gt;
 
 &lt;h3 id=&quot;deformable-convolutional-networks&quot;&gt;Deformable Convolutional Networks&lt;/h3&gt;
 
@@ -183,7 +183,7 @@
 
 &lt;p&gt;基本思想是改变卷积层的核，原来核是一个方形，现在对于核中每个元素加上一个offset，卷积后的特征不再来源于一个方形，而可能来源于各种形状。&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation//Users/wth/Desktop/沟通技巧/屏幕快照 2017-05-26 下午1.20.54.png&quot; alt=&quot;屏幕快照 2017-05-26 下午1.20.54&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/assets/2017-05-26-semantic-segmentation//Users/wth/Desktop/沟通技巧/屏幕快照 2017-05-26 下午1.20.54.png&quot; alt=&quot;屏幕快照 2017-05-26 下午1.20.54&quot; /&gt;&lt;/p&gt;
 
 &lt;p&gt;原来的卷积公式是这样子：&lt;/p&gt;
 
@@ -213,15 +213,15 @@
 
 &lt;p&gt;下图是使用了的deformable conv后感受野的变化&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 下午8.27.21.png&quot; alt=&quot;屏幕快照 2017-05-26 下午8.27.21&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/assets/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 下午8.27.21.png&quot; alt=&quot;屏幕快照 2017-05-26 下午8.27.21&quot; /&gt;&lt;/p&gt;
 
 &lt;p&gt;而且因为核具有自己调整的特性，可以轻松识别出不同scale的物体，下图展示了这一特性，每张图片中的红点是三层卷积对应的感受野，绿点是最高层的中心&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 下午8.30.40.png&quot; alt=&quot;屏幕快照 2017-05-26 下午8.30.40&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/assets/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 下午8.30.40.png&quot; alt=&quot;屏幕快照 2017-05-26 下午8.30.40&quot; /&gt;&lt;/p&gt;
 
 &lt;p&gt;对于RoI也是类似的效果，黄框的分数是由红框的平均值计算来的&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 下午8.30.49.png&quot; alt=&quot;屏幕快照 2017-05-26 下午8.30.49&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/assets/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 下午8.30.49.png&quot; alt=&quot;屏幕快照 2017-05-26 下午8.30.49&quot; /&gt;&lt;/p&gt;
 
 &lt;h4 id=&quot;与相关工作的对比&quot;&gt;与相关工作的对比&lt;/h4&gt;
 
@@ -237,7 +237,7 @@
 
 &lt;p&gt;几种网络应用了deformable conv后的效果比较：&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&quot;../assets/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 下午8.59.34.png&quot; alt=&quot;屏幕快照 2017-05-26 下午8.59.34&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/assets/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 下午8.59.34.png&quot; alt=&quot;屏幕快照 2017-05-26 下午8.59.34&quot; /&gt;&lt;/p&gt;
 
 &lt;p&gt;不知道为什么Faster R-CNN的提升效果最差（可能是RPN），而DeepLab应用6层deformable conv后效果反而变差了（猜测是感受野过大，容易分散，或在某些特征点收敛，过于集中，太关注于局部信息）&lt;/p&gt;
 
