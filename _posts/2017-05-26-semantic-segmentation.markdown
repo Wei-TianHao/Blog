@@ -9,13 +9,11 @@ categories: papers
 
 
 
-# 语义分割笔记
-
-### Image Caption为什么需要Semantic Segmentation
+## Image Caption为什么需要Semantic Segmentation
 
 一开始的网络只是把CNN的FC层直接输入RNN，但这个层里面的东西是难以解释的，但是RNN这么稀里糊涂的弄一弄就能描述出来图片了。这让人非常没有掌控感，于是后来Google有一篇论文就是讨论输入RNN的东西的可解释性是否对于Image caption有作用，一个很自然的想法是不仅要输入图像中的各项特征，而最好能把图像中的各个物体标注出来，将语义信息输入RNN。结果发现，输入可解释的信息大大提高了神经网络的表现。并不是稀里糊涂的一通训练就可以得到好的效果的。这篇论文非常具有启发性。一个创新之后，对这个创新中的局部进行优化，对局部之间的协作方式进行优化，对创新中说得不清晰或者不合理的部分敢于反思并探索，往往大的提升就在这些模糊的区域中了。接下来是几篇经典论文串讲，从最基础的AlexNet开始。
 
-#### ImageNet Classification with Deep Convolutional Neural Networks
+## ImageNet Classification with Deep Convolutional Neural Networks
 
 这篇论文开创了利用深度卷积神经网络进行图像识别的方法。也就是著名的AlexNet，结构如下图，5个卷积层，3个全连接层：
 
@@ -34,7 +32,7 @@ categories: papers
 
 
 
-#### Fully Convolutional Networks for Semantic Segmentation
+## Fully Convolutional Networks for Semantic Segmentation
 
 这篇论文最早提出了全卷积网络的概念，想法其实很简单，CNN的输出是一维的向量，如果我们把最后面的FC层全都换成卷积层，就可以输出二维向量了，下图就是AlexNet卷积化后形成的全卷积网络：
 
@@ -48,7 +46,7 @@ categories: papers
 
 
 
-### DeepLab: Semantic Image Segmentation withDeep Convolutional Nets, Atrous Convolution,and Fully Connected CRFs
+## DeepLab: Semantic Image Segmentation withDeep Convolutional Nets, Atrous Convolution,and Fully Connected CRFs
 
 这篇论文提出了使用DCNN实现语义分割的3个主要挑战
 
@@ -56,7 +54,7 @@ categories: papers
 2. 图片上存在着大小不一的物体
 3. 图片特征在DCNN中的空间变化不变性导致的细节丢失（局部精确性与分类准确性的矛盾，上一篇论文使用了skip layer来处理这个问题）
 
-##### 第一个问题
+#### 第一个问题
 
 作者首先更改了最后两层池化层，把pooling的stride改为1，同时加上1个padding，这样池化后像素的个数就不再改变了。
 
@@ -68,13 +66,13 @@ atrous具体的实现方法有两种，一种是往卷积核里插0，一种是�
 
 有一点要说一下，为什么不把池化层直接去掉呢？主要是因为去掉以后网络结构改变，没法使用训练好的网络fine tuning。因为图像识别的数据量比较大，网络训练的比较成熟，所以一般都希望能够借助其训练好的模型。
 
-##### 第二个问题
+#### 第二个问题
 
 不同尺寸目标的问题。一个好的解决方案是对于不同尺寸分别做DCNN，但这样太慢了，所以作者用了ASPP，并行的使用多个rate不同的atrous conv，这些卷积核共享参数，所以训练快了很多。如下图所示。
 
 ![431DA9CC-7296-4224-B087-6FD7482B8733](/assets/2017-05-26-semantic-segmentation/431DA9CC-7296-4224-B087-6FD7482B8733.png)
 
-##### 第三个问题
+#### 第三个问题
 
 局部精确性与分类表现的矛盾问题。作者说有两种解决方法，一种就是利用多层网络中的信息来增强细节，如skip layers；另一种就是使用一些super-pixel（把像素划分成区域）表示，直接去底层获取信息，比如CRF
 
@@ -102,7 +100,7 @@ $$ x_i$$ 是第$$ i$$ 个像素的标签，$$ \theta_i(x_i) = -log P(x_i)$$ ，$
 
 $$ \mu$$ 在$$ x_i, x_j$$ 相等的时候是0，不相等时是1（只会惩罚相同标签的像素），这就是个双边滤波……
 
-##### 实验中有启发的几个点
+#### 实验中有启发的几个点
 
 1. learning rate使用poly策略比较好
 
@@ -121,13 +119,13 @@ $$ \mu$$ 在$$ x_i, x_j$$ 相等的时候是0，不相等时是1（只会惩罚�
 6. Failure Modes，作者发现他们的模型难以抓住复杂的边界，如下图，甚至可能会被CRF完全抹掉，因为因为DCNN算出来的东西不够自信（零星、稀疏）。作者看好encoder-decoder结构能够解决这个问题
    ![E7E2AC8F-283B-4374-B92F-2928E8E0C857](/assets/2017-05-26-semantic-segmentation/E7E2AC8F-283B-4374-B92F-2928E8E0C857.png)
 
-### Faster R-CNN:Towards Real-Time Object Detection with Region Proposal Networks
+## Faster R-CNN:Towards Real-Time Object Detection with Region Proposal Networks
 
 目标检测近来的发展得益于region proposal methods和region-based convolutional nueral networks的成功。RPM负责给出粗略的语义分割，而R-CNN负责精细化的检测。Fast R-CNN已经得到了几乎实时的运行时间，而现在瓶颈就在于计算RPM，本文的目标就是使用RPN来突破该瓶颈，达到实时目标检测。这篇论文提出了RPN代替了常用的Region proposal methods,负责给出粗略的语义分割。
 
 主要的原理是共享卷积层。作者们发现region-based detectors（比如Fast R-CNN）使用的卷积层产生的特征，也可以用来生成region proposals。
 
-##### RPN的构建
+#### RPN的构建
 
 为了共享卷积，作者考察了ZF model（5层共享卷积）和SZ model（VGG，13层共享卷积层）
 
@@ -137,7 +135,7 @@ $$ \mu$$ 在$$ x_i, x_j$$ 相等的时候是0，不相等时是1（只会惩罚�
 
 实际上这个slide window就是个卷积，后面的两层也是卷积层。对于每个window会提出k个region proposal。作者说这个方法有个很重要的属性是translation invariant（平移不变性，平移后仍能预测出相同大小的anchor boxes）。
 
-##### RPN的学习过程
+#### RPN的学习过程
 
 有着最大IOU或与所有goud-truth box 的IOU都大于70%的anchor会被赋予正标签；
 
@@ -149,11 +147,11 @@ $$ \mu$$ 在$$ x_i, x_j$$ 相等的时候是0，不相等时是1（只会惩罚�
 
 i是anchor的index，$$ p_i$$ 是anchor i被预测为是一个物体的概率，$$ p^*_i$$ 是ground-truth（如果anchor是positive则为1，否则为0），$$ t_i$$ 是表示box四个坐标的参数向量，$$ t^*_I$$ 是ground-truth。$$ L_{cls}$$ 是log loss（Softmax分类器)，$$ L_{reg}(t_i, t_i^*)=R(t_i - t_i^*)$$ ，$$ R$$ 是robust loss function(smooth L1) (==**这是啥**==)。因为$$ p^*_i$$ ，第二项只有正例的时候才会起作用。$$ \lambda$$ 是一个平衡系数。
 
-##### 优化
+#### 优化
 
 每个mini-batch都来自于同一张图片，随机取128个正例和128个负例，如果不够128个正例，就用负例填上
 
-##### 共享卷积特征
+#### 共享卷积特征
 
 共享卷积特征存在这一个困难，Fast R-CNN的训练是基于固定的region proposals的，所以没法直接训练联合模型。而且不知道联合训练是否能让共享卷积层收敛。所以作者提出了按如下步骤训练的方法。
 
@@ -164,11 +162,11 @@ i是anchor的index，$$ p_i$$ 是anchor i被预测为是一个物体的概率，
 
 也就是说卷积层没被联合训练过。
 
-##### 实现细节
+#### 实现细节
 
 许多RPN proposals高度重叠，作者使用了名为non-maximum suppression（NMS）的技术，NMS大大降低了proposal的数量而没有损害检测精度。
 
-##### 实验
+#### 实验
 
 下面是几种技术对于结果的影响的比较
 
@@ -180,7 +178,7 @@ i是anchor的index，$$ p_i$$ 是anchor i被预测为是一个物体的概率，
 
 视觉识别中一个很大的问题在于图像的变形（角度、大小、姿势等）。以往的训练都是通过增加数据来使网络熟悉各种变形或使用一些形变时不变的特征（像是SIFT, scale invariant feature transform）。这篇论文提出CNN需要专门针对变形的结构才能较好的解决这个问题，因此提出了deformable convolution。
 
-##### Deformable Convolution
+#### Deformable Convolution
 
 基本思想是改变卷积层的核，原来核是一个方形，现在对于核中每个元素加上一个offset，卷积后的特征不再来源于一个方形，而可能来源于各种形状。
 
