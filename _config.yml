@@ -16,7 +16,7 @@
 title: My blog 
 email: phi.wth@gmail.com
 description: > # this means to ignore newlines until "baseurl:"
- 都是骗人的
+ 随便写写，都是骗人的
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "https://wei-tianhao.github.io" # the base hostname & protocol for your site, e.g. http://example.com
 
