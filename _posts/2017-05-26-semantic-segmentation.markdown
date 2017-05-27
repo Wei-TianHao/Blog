@@ -2,7 +2,7 @@
 layout: post
 title: 语义分割笔记
 date:   2017-05-26 10:00:42 +0800
-categories: papers
+categories: 论文
 
 
 ---
