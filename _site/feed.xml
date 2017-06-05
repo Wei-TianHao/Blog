@@ -1,5 +1,112 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.4.3">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2017-05-27T13:59:17+08:00</updated><id>http://localhost:4000/</id><title type="html">My blog</title><subtitle>随便写写，都是骗人的
-</subtitle><entry><title type="html">语义分割笔记</title><link href="http://localhost:4000/%E8%AE%BA%E6%96%87/2017/05/26/semantic-segmentation.html" rel="alternate" type="text/html" title="语义分割笔记" /><published>2017-05-26T10:00:42+08:00</published><updated>2017-05-26T10:00:42+08:00</updated><id>http://localhost:4000/%E8%AE%BA%E6%96%87/2017/05/26/semantic-segmentation</id><content type="html" xml:base="http://localhost:4000/%E8%AE%BA%E6%96%87/2017/05/26/semantic-segmentation.html">&lt;h2 id=&quot;image-caption为什么需要semantic-segmentation&quot;&gt;Image Caption为什么需要Semantic Segmentation&lt;/h2&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.4.3">Jekyll</generator><link href="https://wei-tianhao.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://wei-tianhao.github.io/" rel="alternate" type="text/html" /><updated>2017-06-05T10:03:29+08:00</updated><id>https://wei-tianhao.github.io/</id><title type="html">My blog</title><subtitle>随便写写，都是骗人的
+</subtitle><entry><title type="html">OSVOS跟进</title><link href="https://wei-tianhao.github.io/%E8%AE%BA%E6%96%87/2017/06/05/OSVOS%E8%B7%9F%E8%BF%9B.html" rel="alternate" type="text/html" title="OSVOS跟进" /><published>2017-06-05T10:00:00+08:00</published><updated>2017-06-05T10:00:00+08:00</updated><id>https://wei-tianhao.github.io/%E8%AE%BA%E6%96%87/2017/06/05/OSVOS%E8%B7%9F%E8%BF%9B</id><content type="html" xml:base="https://wei-tianhao.github.io/%E8%AE%BA%E6%96%87/2017/06/05/OSVOS%E8%B7%9F%E8%BF%9B.html">&lt;h2 id=&quot;semantically-guided-video-object-segmentation&quot;&gt;Semantically-Guided Video Object Segmentation&lt;/h2&gt;
+
+&lt;p&gt;这篇论文我很喜欢，更符合人类的认知过程。&lt;/p&gt;
+
+&lt;p&gt;该篇论文提出的方法是模拟人类在视频中追踪物体的情形，人们在视频追踪的时候分为两种情形，一种是连续的画面，那很自然的就由上一帧的物体所在点过渡过来；但是当漏了几秒没看的时候，人们是怎么识别物体的呢？这就是该篇论文的出发点，语义分析追踪。即我第一帧看到了车，在画面不能连续起来的时候我就去找“车”这个语义在图片哪里。&lt;/p&gt;
+
+&lt;p&gt;对于第一帧图片使用FCN对图片中的各种物体做出像素级预测，然后寻找与mask重合最多的预测，比如说是car。对后面的帧预测的时候，即可先对图片做语义分割，然后找语义为car的预测，在于上一帧的mask结合，做出预测。总体结构如下&lt;img src=&quot;/assets/2017-06-05-OSVOS跟进/屏幕快照 2017-06-05 上午12.15.02.png&quot; alt=&quot;屏幕快照 2017-06-05 上午12.15.02&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;论文还提出了一个conditional classifier layer，主要功能是视情况结合propagation的结果和semantic segmentation的结果。比如物体移动非常剧烈的时候只采用semantic segmentation，放弃propagation的mask；而又多个相同语义的物体时则要侧重于propagation的结果（具体实现以后还要再看下）。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/2017-06-05-OSVOS跟进/屏幕快照 2017-06-05 上午12.17.36.png&quot; alt=&quot;屏幕快照 2017-06-05 上午12.17.36&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;这篇论文我觉的最符合人类的直观认识，不知道还能不能再从这方面深入挖掘一下。&lt;/p&gt;
+
+&lt;h2 id=&quot;lucid-data-dreaming-for-object-tracking&quot;&gt;Lucid Data Dreaming for Object Tracking&lt;/h2&gt;
+
+&lt;p&gt;该篇论文主要提出了一种增强数据的方法，可以只用训练集里的数据就达到较好的效果。&lt;/p&gt;
+
+&lt;p&gt;按照以下五步来&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;光照随机变化，变换HSV中S和V&lt;/li&gt;
+  &lt;li&gt;把前景抠出来，补全背景&lt;/li&gt;
+  &lt;li&gt;随机移动、变形前景&lt;/li&gt;
+  &lt;li&gt;随机模拟相机变化，平移、旋转、放缩&lt;/li&gt;
+  &lt;li&gt;前景背景结合&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/2017-06-05-OSVOS跟进/屏幕快照 2017-06-04 下午11.54.18.png&quot; alt=&quot;屏幕快照 2017-06-04 下午11.57.37&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;作者用一帧生成&lt;script type=&quot;math/tex&quot;&gt;10^3&lt;/script&gt;级别的训练数据，效果相同的情形下数据量仅为原来的&lt;script type=&quot;math/tex&quot;&gt;\frac1{100}&lt;/script&gt;到&lt;script type=&quot;math/tex&quot;&gt;\frac1{20}&lt;/script&gt;。这种数据生成是跟网络完全独立的，可以用在以后的训练中。&lt;/p&gt;
+
+&lt;p&gt;作者训练用的模型是结合上一帧的mask与optical flow的模型，不是本文研究的重点，简要介绍了一下。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/2017-06-05-OSVOS跟进/屏幕快照 2017-06-04 下午11.57.37.png&quot; alt=&quot;屏幕快照 2017-06-04 下午11.57.37&quot; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;learning-video-object-segmentation-from-static-images&quot;&gt;Learning Video Object Segmentation from Static Images&lt;/h2&gt;
+
+&lt;p&gt;这篇论文提出将视频vido object segmentation看做是guided instance segmentation。本文的模型是先用静态图像预训练convnet，再由视频中的前几帧引导，生成高精确度的分割。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/2017-06-05-OSVOS跟进/屏幕快照 2017-06-03 下午12.08.47.png&quot; alt=&quot;屏幕快照 2017-06-03 下午12.08.47&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;模型的关键在于离线和在线算法的结合，离线算法用于学习物体的特征，在线算法refine mask。大步骤跟OSVOS基本一致，但本质思想不同&lt;/p&gt;
+
+&lt;h3 id=&quot;与osvos的区别&quot;&gt;与OSVOS的区别&lt;/h3&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;总体思路是Mask Track，而OSVOS则是Mask再识别。对于当前帧的预测，该篇论文使用当前帧帧的前几帧做引导，但OSVOS只是用了视频的第一帧，即没有propagation的过程。只用第一帧可能会导致效果随着时间下降（与第一帧差异越来越大）。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;ul&gt;
+      &lt;li&gt;第一步pre-training，同样是图像识别&lt;/li&gt;
+      &lt;li&gt;第二步offline training，OSVOS是使用训练集使网络学习mask的广义概念，而该篇则注重使网络学习如何propagating（根据前几帧的mask和当前帧推导出当前帧的mask）&lt;/li&gt;
+      &lt;li&gt;第三步online training，同样是使用test视频的一张标注来refine，而OSVOS还有轮廓的CNN预测来提高精确度。该篇的refine是通过对第一张mask进行各种变换形成许多训练数据，用这些数据训练网络，在test时用第一张标注辅助propagation（类似广义mask）&lt;/li&gt;
+      &lt;li&gt;Test，OSVOS只用第一张进行mask预测，该篇除了使用propagation以外也同样将第一张标注用于所有图像的mask预测&lt;/li&gt;
+    &lt;/ul&gt;
+
+    &lt;p&gt;主要区别在于第二步，第三步中OSVOS的轮廓预测是独立的模块，可以应用到该篇&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&quot;训练细节&quot;&gt;训练细节&lt;/h3&gt;
+
+&lt;p&gt;使用的网络是DeepLabv2-VGG network，&lt;/p&gt;
+
+&lt;p&gt;第二步的实际训练方式是先将前一帧的mask做一些形态学变换模拟各种噪声，增大数据量，同时使用图片识别的mask进行一些形态学变换，来模拟前一帧与当前帧的差异。这样就可以使用图片识别的数据集进行训练，数据量大大提升。）&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/2017-06-05-OSVOS跟进/屏幕快照 2017-06-03 下午12.09.00.png&quot; alt=&quot;屏幕快照 2017-06-03 下午12.09.00&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;作者还提出了几种guidence的变体，有box annotation和optical flow&lt;/p&gt;
+
+&lt;p&gt;第一张的online finetuning要200次迭代，加上第一张的fintuning平均每帧的预测要12秒&lt;/p&gt;
+
+&lt;h2 id=&quot;automatic-real-time-background-cut-for-portrait-videos&quot;&gt;Automatic Real-time Background Cut for Portrait Videos&lt;/h2&gt;
+
+&lt;p&gt;这篇论文是讲怎么从视频里实时抠出人像的，主要是借鉴OSVOS来学习背景。&lt;/p&gt;
+
+&lt;p&gt;该网络先学习许多背景的采样，再跟原视频结合，达到更好的消除效果，称为global attenuation&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/Users/wth/Desktop/屏幕快照 2017-06-05 上午12.25.38.png&quot; alt=&quot;屏幕快照 2017-06-05 上午12.25.38&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;感觉这个问题与video object segmentation差别比较大，因为人的大小基本恒定，而且背景一般是静态的。该网络对于动态背景的表现很差。&lt;/p&gt;
+
+&lt;p&gt;启发点可能有对于背景的学习是否可以更重视一些？&lt;/p&gt;
+
+&lt;h2 id=&quot;deeply-supervised-salient-object-detection-with-short-connections&quot;&gt;Deeply Supervised Salient Object Detection with Short Connections&lt;/h2&gt;
+
+&lt;p&gt;在HED中，深层的side outputs主要用于定位，浅层的side outputs主要用于表达细节，这启发了作者使用short connections在HED内部构建skip-layer，更好的结合深层与浅层的能力。下图的c和d是作者提出的模型。（以下暂称SCHED(short connected HED)，作者没给官方简称…）&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/2017-06-05-OSVOS跟进/屏幕快照 2017-06-04 下午9.59.57.png&quot; alt=&quot;屏幕快照 2017-06-04 下午9.59.57&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;这个网络的具体应用我觉得可以有以下几种途径&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;OSVOS跟进，用这个网络与ImageNet预训练的网络（或者合并成一个预训练过的网络）共同学习如何区分前景和后景，提升OSVOS区分mask的能力，总体步骤不变。
+    &lt;ul&gt;
+      &lt;li&gt;优势：mask一般是salient object，应该学习起来比较容易，而且SCHED带有轮廓学习能力，可以省略OSVOS中的轮廓CNN，提升速度，简化模型&lt;/li&gt;
+      &lt;li&gt;劣势：有时候mask是不起眼的物体，比如远处来的赛车，一开始很小，这种情况可能学习起来比较困难&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;Learning Video Object Segmentation from Static Images跟进，用SCHED代替optical flow，与propagation结合
+    &lt;ul&gt;
+      &lt;li&gt;优势，更快，轮廓更精确&lt;/li&gt;
+      &lt;li&gt;劣势，没有明显的理由表明会提升表现&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;</content><author><name></name></author><summary type="html">Semantically-Guided Video Object Segmentation</summary></entry><entry><title type="html">语义分割笔记</title><link href="https://wei-tianhao.github.io/%E8%AE%BA%E6%96%87/2017/05/26/semantic-segmentation.html" rel="alternate" type="text/html" title="语义分割笔记" /><published>2017-05-26T10:00:42+08:00</published><updated>2017-05-26T10:00:42+08:00</updated><id>https://wei-tianhao.github.io/%E8%AE%BA%E6%96%87/2017/05/26/semantic-segmentation</id><content type="html" xml:base="https://wei-tianhao.github.io/%E8%AE%BA%E6%96%87/2017/05/26/semantic-segmentation.html">&lt;h2 id=&quot;image-caption为什么需要semantic-segmentation&quot;&gt;Image Caption为什么需要Semantic Segmentation&lt;/h2&gt;
 
 &lt;p&gt;一开始的网络只是把CNN的FC层直接输入RNN，但这个层里面的东西是难以解释的，但是RNN这么稀里糊涂的弄一弄就能描述出来图片了。这让人非常没有掌控感，于是后来Google有一篇论文就是讨论输入RNN的东西的可解释性是否对于Image caption有作用，一个很自然的想法是不仅要输入图像中的各项特征，而最好能把图像中的各个物体标注出来，将语义信息输入RNN。结果发现，输入可解释的信息大大提高了神经网络的表现。并不是稀里糊涂的一通训练就可以得到好的效果的。这篇论文非常具有启发性。一个创新之后，对这个创新中的局部进行优化，对局部之间的协作方式进行优化，对创新中说得不清晰或者不合理的部分敢于反思并探索，往往大的提升就在这些模糊的区域中了。接下来是几篇经典论文串讲，从最基础的AlexNet开始。&lt;/p&gt;
 
@@ -249,4 +356,4 @@
 
 &lt;blockquote&gt;
   &lt;p&gt;conv，pooling这种操作，其实可以分成三阶段： indexing（im2col） ，reduce(sum), reindexing（col2im). 在每一阶段都可以做一些事情。 用data driven的方式去学每一阶段的参数，也是近些年的主流方向。&lt;/p&gt;
-&lt;/blockquote&gt;</content><author><name></name></author><summary type="html">Image Caption为什么需要Semantic Segmentation</summary></entry><entry><title type="html">正在施工</title><link href="http://localhost:4000/%E9%9A%8F%E7%AC%94/2017/05/26/welcome-to-jekyll.html" rel="alternate" type="text/html" title="正在施工" /><published>2017-05-26T00:27:42+08:00</published><updated>2017-05-26T00:27:42+08:00</updated><id>http://localhost:4000/%E9%9A%8F%E7%AC%94/2017/05/26/welcome-to-jekyll</id><content type="html" xml:base="http://localhost:4000/%E9%9A%8F%E7%AC%94/2017/05/26/welcome-to-jekyll.html">&lt;p&gt;刚开通的博客，还在施工ˊ_&amp;gt;ˋ&lt;/p&gt;</content><author><name></name></author><summary type="html">刚开通的博客，还在施工ˊ_&amp;gt;ˋ</summary></entry></feed>
+&lt;/blockquote&gt;</content><author><name></name></author><summary type="html">Image Caption为什么需要Semantic Segmentation</summary></entry><entry><title type="html">正在施工</title><link href="https://wei-tianhao.github.io/%E9%9A%8F%E7%AC%94/2017/05/26/welcome-to-jekyll.html" rel="alternate" type="text/html" title="正在施工" /><published>2017-05-26T00:27:42+08:00</published><updated>2017-05-26T00:27:42+08:00</updated><id>https://wei-tianhao.github.io/%E9%9A%8F%E7%AC%94/2017/05/26/welcome-to-jekyll</id><content type="html" xml:base="https://wei-tianhao.github.io/%E9%9A%8F%E7%AC%94/2017/05/26/welcome-to-jekyll.html">&lt;p&gt;刚开通的博客，还在施工ˊ_&amp;gt;ˋ&lt;/p&gt;</content><author><name></name></author><summary type="html">刚开通的博客，还在施工ˊ_&amp;gt;ˋ</summary></entry></feed>
