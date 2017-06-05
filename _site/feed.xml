@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.4.3">Jekyll</generator><link href="https://wei-tianhao.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://wei-tianhao.github.io/" rel="alternate" type="text/html" /><updated>2017-06-05T10:03:29+08:00</updated><id>https://wei-tianhao.github.io/</id><title type="html">My blog</title><subtitle>随便写写，都是骗人的
-</subtitle><entry><title type="html">OSVOS跟进</title><link href="https://wei-tianhao.github.io/%E8%AE%BA%E6%96%87/2017/06/05/OSVOS%E8%B7%9F%E8%BF%9B.html" rel="alternate" type="text/html" title="OSVOS跟进" /><published>2017-06-05T10:00:00+08:00</published><updated>2017-06-05T10:00:00+08:00</updated><id>https://wei-tianhao.github.io/%E8%AE%BA%E6%96%87/2017/06/05/OSVOS%E8%B7%9F%E8%BF%9B</id><content type="html" xml:base="https://wei-tianhao.github.io/%E8%AE%BA%E6%96%87/2017/06/05/OSVOS%E8%B7%9F%E8%BF%9B.html">&lt;h2 id=&quot;semantically-guided-video-object-segmentation&quot;&gt;Semantically-Guided Video Object Segmentation&lt;/h2&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.4.3">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2017-06-05T10:56:14+08:00</updated><id>http://localhost:4000/</id><title type="html">My blog</title><subtitle>随便写写，都是骗人的
+</subtitle><entry><title type="html">OSVOS跟进</title><link href="http://localhost:4000/%E8%AE%BA%E6%96%87/2017/06/05/OSVOS%E8%B7%9F%E8%BF%9B.html" rel="alternate" type="text/html" title="OSVOS跟进" /><published>2017-06-05T10:00:00+08:00</published><updated>2017-06-05T10:00:00+08:00</updated><id>http://localhost:4000/%E8%AE%BA%E6%96%87/2017/06/05/OSVOS%E8%B7%9F%E8%BF%9B</id><content type="html" xml:base="http://localhost:4000/%E8%AE%BA%E6%96%87/2017/06/05/OSVOS%E8%B7%9F%E8%BF%9B.html">&lt;h2 id=&quot;semantically-guided-video-object-segmentation&quot;&gt;Semantically-Guided Video Object Segmentation&lt;/h2&gt;
 
 &lt;p&gt;这篇论文我很喜欢，更符合人类的认知过程。&lt;/p&gt;
 
@@ -79,7 +79,7 @@
 
 &lt;p&gt;该网络先学习许多背景的采样，再跟原视频结合，达到更好的消除效果，称为global attenuation&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&quot;/Users/wth/Desktop/屏幕快照 2017-06-05 上午12.25.38.png&quot; alt=&quot;屏幕快照 2017-06-05 上午12.25.38&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/assets/2017-06-05-OSVOS跟进/屏幕快照 2017-06-05 上午12.25.38.png&quot; alt=&quot;屏幕快照 2017-06-05 上午12.25.38&quot; /&gt;&lt;/p&gt;
 
 &lt;p&gt;感觉这个问题与video object segmentation差别比较大，因为人的大小基本恒定，而且背景一般是静态的。该网络对于动态背景的表现很差。&lt;/p&gt;
 
@@ -106,7 +106,7 @@
       &lt;li&gt;劣势，没有明显的理由表明会提升表现&lt;/li&gt;
     &lt;/ul&gt;
   &lt;/li&gt;
-&lt;/ol&gt;</content><author><name></name></author><summary type="html">Semantically-Guided Video Object Segmentation</summary></entry><entry><title type="html">语义分割笔记</title><link href="https://wei-tianhao.github.io/%E8%AE%BA%E6%96%87/2017/05/26/semantic-segmentation.html" rel="alternate" type="text/html" title="语义分割笔记" /><published>2017-05-26T10:00:42+08:00</published><updated>2017-05-26T10:00:42+08:00</updated><id>https://wei-tianhao.github.io/%E8%AE%BA%E6%96%87/2017/05/26/semantic-segmentation</id><content type="html" xml:base="https://wei-tianhao.github.io/%E8%AE%BA%E6%96%87/2017/05/26/semantic-segmentation.html">&lt;h2 id=&quot;image-caption为什么需要semantic-segmentation&quot;&gt;Image Caption为什么需要Semantic Segmentation&lt;/h2&gt;
+&lt;/ol&gt;</content><author><name></name></author><summary type="html">Semantically-Guided Video Object Segmentation</summary></entry><entry><title type="html">语义分割笔记</title><link href="http://localhost:4000/%E8%AE%BA%E6%96%87/2017/05/26/semantic-segmentation.html" rel="alternate" type="text/html" title="语义分割笔记" /><published>2017-05-26T10:00:42+08:00</published><updated>2017-05-26T10:00:42+08:00</updated><id>http://localhost:4000/%E8%AE%BA%E6%96%87/2017/05/26/semantic-segmentation</id><content type="html" xml:base="http://localhost:4000/%E8%AE%BA%E6%96%87/2017/05/26/semantic-segmentation.html">&lt;h2 id=&quot;image-caption为什么需要semantic-segmentation&quot;&gt;Image Caption为什么需要Semantic Segmentation&lt;/h2&gt;
 
 &lt;p&gt;一开始的网络只是把CNN的FC层直接输入RNN，但这个层里面的东西是难以解释的，但是RNN这么稀里糊涂的弄一弄就能描述出来图片了。这让人非常没有掌控感，于是后来Google有一篇论文就是讨论输入RNN的东西的可解释性是否对于Image caption有作用，一个很自然的想法是不仅要输入图像中的各项特征，而最好能把图像中的各个物体标注出来，将语义信息输入RNN。结果发现，输入可解释的信息大大提高了神经网络的表现。并不是稀里糊涂的一通训练就可以得到好的效果的。这篇论文非常具有启发性。一个创新之后，对这个创新中的局部进行优化，对局部之间的协作方式进行优化，对创新中说得不清晰或者不合理的部分敢于反思并探索，往往大的提升就在这些模糊的区域中了。接下来是几篇经典论文串讲，从最基础的AlexNet开始。&lt;/p&gt;
 
@@ -356,4 +356,4 @@
 
 &lt;blockquote&gt;
   &lt;p&gt;conv，pooling这种操作，其实可以分成三阶段： indexing（im2col） ，reduce(sum), reindexing（col2im). 在每一阶段都可以做一些事情。 用data driven的方式去学每一阶段的参数，也是近些年的主流方向。&lt;/p&gt;
-&lt;/blockquote&gt;</content><author><name></name></author><summary type="html">Image Caption为什么需要Semantic Segmentation</summary></entry><entry><title type="html">正在施工</title><link href="https://wei-tianhao.github.io/%E9%9A%8F%E7%AC%94/2017/05/26/welcome-to-jekyll.html" rel="alternate" type="text/html" title="正在施工" /><published>2017-05-26T00:27:42+08:00</published><updated>2017-05-26T00:27:42+08:00</updated><id>https://wei-tianhao.github.io/%E9%9A%8F%E7%AC%94/2017/05/26/welcome-to-jekyll</id><content type="html" xml:base="https://wei-tianhao.github.io/%E9%9A%8F%E7%AC%94/2017/05/26/welcome-to-jekyll.html">&lt;p&gt;刚开通的博客，还在施工ˊ_&amp;gt;ˋ&lt;/p&gt;</content><author><name></name></author><summary type="html">刚开通的博客，还在施工ˊ_&amp;gt;ˋ</summary></entry></feed>
+&lt;/blockquote&gt;</content><author><name></name></author><summary type="html">Image Caption为什么需要Semantic Segmentation</summary></entry><entry><title type="html">正在施工</title><link href="http://localhost:4000/%E9%9A%8F%E7%AC%94/2017/05/26/welcome-to-jekyll.html" rel="alternate" type="text/html" title="正在施工" /><published>2017-05-26T00:27:42+08:00</published><updated>2017-05-26T00:27:42+08:00</updated><id>http://localhost:4000/%E9%9A%8F%E7%AC%94/2017/05/26/welcome-to-jekyll</id><content type="html" xml:base="http://localhost:4000/%E9%9A%8F%E7%AC%94/2017/05/26/welcome-to-jekyll.html">&lt;p&gt;刚开通的博客，还在施工ˊ_&amp;gt;ˋ&lt;/p&gt;</content><author><name></name></author><summary type="html">刚开通的博客，还在施工ˊ_&amp;gt;ˋ</summary></entry></feed>
