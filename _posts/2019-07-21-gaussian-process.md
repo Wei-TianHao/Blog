@@ -2,7 +2,7 @@
 layout: post
 title: 高斯过程回归科普
 date:   2019-09-24 10:00:00 +0800
-categories: bayesian-methods machine-learning
+tags: bayesian-methods machine-learning
 ---
 
 
