@@ -2,7 +2,7 @@
 layout: post
 comments: true
 title: "元学习: 学习如何学习"
-date: 2018-11-30 00:00:00
+date: 2019-9-17 00:00:00
 tags: meta-learning long-read
 ---
 
