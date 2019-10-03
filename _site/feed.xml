@@ -1,16 +1,13 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.4.3">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2019-09-25T21:09:39-04:00</updated><id>http://localhost:4000/</id><title type="html">My blog</title><subtitle>随便写写，都是骗人的
-</subtitle><entry><title type="html">瞎扯</title><link href="http://localhost:4000/%E7%9E%8E%E6%89%AF/2019/07/21/%E7%9E%8E%E6%89%AF.html" rel="alternate" type="text/html" title="瞎扯" /><published>2019-07-20T22:00:00-04:00</published><updated>2019-07-20T22:00:00-04:00</updated><id>http://localhost:4000/%E7%9E%8E%E6%89%AF/2019/07/21/%E7%9E%8E%E6%89%AF</id><content type="html" xml:base="http://localhost:4000/%E7%9E%8E%E6%89%AF/2019/07/21/%E7%9E%8E%E6%89%AF.html">&lt;h2 id=&quot;瞎扯&quot;&gt;瞎扯&lt;/h2&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.4.3">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2019-10-03T19:52:57-04:00</updated><id>http://localhost:4000/</id><title type="html">My blog</title><subtitle>随便写写，都是骗人的
+</subtitle><entry><title type="html">高斯过程回归科普</title><link href="http://localhost:4000/2019/09/24/gaussian-process.html" rel="alternate" type="text/html" title="高斯过程回归科普" /><published>2019-09-23T22:00:00-04:00</published><updated>2019-09-23T22:00:00-04:00</updated><id>http://localhost:4000/2019/09/24/gaussian-process</id><content type="html" xml:base="http://localhost:4000/2019/09/24/gaussian-process.html">&lt;blockquote&gt;
+  &lt;p&gt;高斯过程最关键的思想就是，你不想要什么变量，就对这个变量做高斯分布假设…然后就可以计算关于这个变量的边缘分布，把这个变量消掉，建立起其他变量之间的直接联系。&lt;/p&gt;
+&lt;/blockquote&gt;
 
-&lt;p&gt;测试公式
-&lt;script type=&quot;math/tex&quot;&gt;A^x_y = F_{uck}&lt;/script&gt;&lt;/p&gt;
+&lt;h3 id=&quot;简介&quot;&gt;简介&lt;/h3&gt;
 
-&lt;p&gt;测试一下github.io&lt;/p&gt;
+&lt;p&gt;高斯过程回归是一类贝叶斯非参方法，解决的问题是给定一堆数据点$(x,y)$后，如何寻找拟合数据最好的函数，同时给出函数的分布，类似于置信区间。&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&quot;/assets/2019-07-21-瞎扯/fuck.png&quot; alt=&quot;fuck&quot; /&gt;&lt;/p&gt;</content><author><name></name></author><summary type="html">瞎扯</summary></entry><entry><title type="html">高斯过程回归科普</title><link href="http://localhost:4000/bayesian-methods/machine-learning/2019/07/21/gaussian-process.html" rel="alternate" type="text/html" title="高斯过程回归科普" /><published>2019-07-20T22:00:00-04:00</published><updated>2019-07-20T22:00:00-04:00</updated><id>http://localhost:4000/bayesian-methods/machine-learning/2019/07/21/gaussian-process</id><content type="html" xml:base="http://localhost:4000/bayesian-methods/machine-learning/2019/07/21/gaussian-process.html">&lt;h2 id=&quot;高斯过程回归科普&quot;&gt;高斯过程回归科普&lt;/h2&gt;
-
-&lt;p&gt;高斯过程回归是一类贝叶斯方法，解决的问题是给定一堆数据点$(x,y)$后，如何寻找拟合数据最好的函数，同时给出函数的分布，类似于置信区间。&lt;/p&gt;
-
-&lt;p&gt;为了先直观的感受一下高斯过程回归的过程，我们先讲一下贝叶斯线性回归。&lt;/p&gt;
+&lt;p&gt;为了引入高斯过程回归，我们先讲一下参数方法，贝叶斯线性回归。&lt;/p&gt;
 
 &lt;h3 id=&quot;贝叶斯线性回归&quot;&gt;贝叶斯线性回归&lt;/h3&gt;
 
@@ -69,10 +66,9 @@ p(S)=\int p(w)\ p(S|w)\ dw&lt;/script&gt;&lt;/p&gt;
 &lt;/table&gt;
 
 &lt;h3 id=&quot;高斯过程&quot;&gt;高斯过程&lt;/h3&gt;
-&lt;p&gt;上面的方法计算的是某个具体模型的&lt;strong&gt;&lt;em&gt;参数的概率分布&lt;/em&gt;&lt;/strong&gt;，而高斯过程直接计算所有&lt;strong&gt;&lt;em&gt;模型的概率分布&lt;/em&gt;&lt;/strong&gt;。
-因为不管用什么模型，我们总是对于模型有一些假设，这些假设如果符合现实会有很大的帮助，但如果不准（一般都很不准…），则会带来很大的损害。所以我们想直接让算法自己选择模型，即算出模型的概率分布。&lt;/p&gt;
+&lt;p&gt;上面的方法计算的是某个具体模型的&lt;strong&gt;&lt;em&gt;参数的概率分布&lt;/em&gt;&lt;/strong&gt;，而高斯过程直接计算所有&lt;strong&gt;&lt;em&gt;模型的概率分布&lt;/em&gt;&lt;/strong&gt;。因为不管用什么模型，我们总是对于模型有一些假设，这些假设如果符合现实会有很大的帮助，但如果不准（一般都很不准…），则会带来很大的损害。所以我们想能不能直接让算法自己选择模型，即算出模型的概率分布呢？&lt;/p&gt;
 
-&lt;p&gt;那怎么才能计算模型的概率分布呢？我们知道函数可以被看做是一个无穷维的向量，我们可以假设每一维（即x上每个点）都是一个随机变量，每个随机变量都符合高斯分布，他们联合起来符合多元高斯分布，即这个函数符合一个多元高斯分布。我们每次观测完，就可以通过最大后验概率调整这个多元高斯分布的参数。观测足够多，就可以得到接近真实的模型概率分布。&lt;/p&gt;
+&lt;p&gt;那怎么才能计算模型的概率分布呢？我们知道函数可以被看做是一个无穷维的向量，我们可以假设每一维（即x上每个点）都是一个随机变量，每个随机变量都符合高斯分布，他们联合起来符合多元高斯分布（无限元高斯分布），即这个函数符合一个多元高斯分布。我们每次观测完，就可以通过最大后验概率调整这个多元高斯分布的参数。观测足够多，就可以得到接近真实的模型概率分布。&lt;/p&gt;
 
 &lt;p&gt;这样的话我们要给出一个无穷维的均值向量（一个均值函数）$\mu$和无穷维的协方差矩阵$\sigma$。对于均值函数，我们可以简单粗暴的设成衡为$0$，原因跟之前一样，在没有信息的情况下尽量无偏；无穷维向量我们可以用恒为零的函数，可无穷维的矩阵可怎么办呢？解决方案是，我们假设两个变量的关联程度只跟他们之间的“距离”有关，越近越相关，跟其他的东西都没有关系。设衡量距离的函数为$k(x_i,x_j)$，则协方差中的$(i,j)$项为$k(x_i,x_j)$。给定这些先验后，我们可以说$f$服从这样一个高斯过程:
 &lt;script type=&quot;math/tex&quot;&gt;f(.) \sim GP(0,k(.,.))&lt;/script&gt;&lt;/p&gt;
@@ -111,7 +107,17 @@ $\vec{\varepsilon},\vec{\varepsilon^*}$是噪音在两个数据集上组成的�
 &lt;script type=&quot;math/tex&quot;&gt;% &lt;![CDATA[
 {\qquad \begin{aligned} \mu^{*} &amp;=K\left(X_{*}, X\right)\left(K(X, X)+\sigma^{2} I\right)^{-1} \vec{y} \\ \Sigma^{*} &amp;=K\left(X_{*}, X_{*}\right)+\sigma^{2} I-K\left(X_{*}, X\right)\left(K(X, X)+\sigma^{2} I\right)^{-1} K\left(X, X_{*}\right) \end{aligned}} %]]&gt;&lt;/script&gt;&lt;/p&gt;
 
-&lt;p&gt;这样我们就得到了测试集上预测的分布！$\mu^&lt;em&gt;$就是我们用后验概率最大的模型在$X_&lt;/em&gt;$上预测出来的结果。&lt;/p&gt;</content><author><name></name></author><summary type="html">高斯过程回归科普</summary></entry><entry><title type="html">元学习: 学习如何学习</title><link href="http://localhost:4000/2018/11/30/meta-learning.html" rel="alternate" type="text/html" title="元学习: 学习如何学习" /><published>2018-11-29T19:00:00-05:00</published><updated>2018-11-29T19:00:00-05:00</updated><id>http://localhost:4000/2018/11/30/meta-learning</id><content type="html" xml:base="http://localhost:4000/2018/11/30/meta-learning.html">&lt;blockquote&gt;
+&lt;p&gt;这样我们就得到了测试集上预测的分布！$\mu^&lt;em&gt;$就是我们用后验概率最大的模型在$X_&lt;/em&gt;$上预测出来的结果。&lt;/p&gt;
+
+&lt;p&gt;另外提一点，最后的结果直接由输入和先验决定，没有出现任何参数，这也是高斯过程被称为非参方法的原因。但其实我们也可以理解为非参方法实际上就是无穷参方法，因为函数的每一个点都是一个参数。或者我们把最终学到的结果看做是由训练数据作为参数的函数，训练数据越多，参数就越多。&lt;/p&gt;
+
+&lt;h3 id=&quot;高斯过程隐变量模型&quot;&gt;高斯过程隐变量模型&lt;/h3&gt;
+
+&lt;p&gt;高斯过程隐变量模型是一种降维的方法，这种方法假设低维到高维的映射满足一个线性模型，通过假设模型参数符合高斯分布，边缘化了模型中的参数，直接联系起了隐空间和观测空间。感兴趣的可以看一下&lt;a href=&quot;https://zhuanlan.zhihu.com/p/30969391&quot;&gt;这篇博客&lt;/a&gt;。&lt;/p&gt;
+
+&lt;h3 id=&quot;高斯过程动态模型&quot;&gt;高斯过程动态模型&lt;/h3&gt;
+
+&lt;p&gt;高斯过程动态模型就是把高斯过程隐变量模型用于非线性动态系统建模，同样是假设参数满足高斯分布，通过计算边缘分布消掉参数，建立起隐空间和观测空间的联系。&lt;/p&gt;</content><author><name></name></author><category term="bayesian-methods" /><category term="machine-learning" /><summary type="html">高斯过程最关键的思想就是，你不想要什么变量，就对这个变量做高斯分布假设…然后就可以计算关于这个变量的边缘分布，把这个变量消掉，建立起其他变量之间的直接联系。</summary></entry><entry><title type="html">元学习: 学习如何学习</title><link href="http://localhost:4000/2019/09/17/meta-learning.html" rel="alternate" type="text/html" title="元学习: 学习如何学习" /><published>2019-09-16T20:00:00-04:00</published><updated>2019-09-16T20:00:00-04:00</updated><id>http://localhost:4000/2019/09/17/meta-learning</id><content type="html" xml:base="http://localhost:4000/2019/09/17/meta-learning.html">&lt;blockquote&gt;
   &lt;p&gt;学习如何学习的方法被称为元学习。元学习的目标是在接触到没见过的任务或者迁移到新环境中时，可以根据之前的经验和少量的样本快速学习如何应对。元学习有三种常见的实现方法：1）学习有效的距离度量方式（基于度量的方法）；2）使用带有显式或隐式记忆储存的（循环）神经网络（基于模型的方法）；3）训练以快速学习为目标的模型（基于优化的方法）&lt;/p&gt;
 &lt;/blockquote&gt;
 
@@ -862,7 +868,14 @@ g_\text{Reptile}  &amp;= g^{(0)}_0 + g_0^{(1)} - \alpha H^{(1)}_0 g_0^{(0)} + O(
 
 &lt;p&gt;[13] Alex Nichol, Joshua Achiam, John Schulman. &lt;a href=&quot;https://arxiv.org/abs/1803.02999&quot;&gt;“On First-Order Meta-Learning Algorithms.”&lt;/a&gt; arXiv preprint arXiv:1803.02999 (2018).&lt;/p&gt;
 
-&lt;p&gt;[14] &lt;a href=&quot;https://www.slideshare.net/YoonhoLee4/on-firstorder-metalearning-algorithms&quot;&gt;Slides on Reptile&lt;/a&gt; by Yoonho Lee.&lt;/p&gt;</content><author><name></name></author><category term="meta-learning" /><category term="long-read" /><summary type="html">学习如何学习的方法被称为元学习。元学习的目标是在接触到没见过的任务或者迁移到新环境中时，可以根据之前的经验和少量的样本快速学习如何应对。元学习有三种常见的实现方法：1）学习有效的距离度量方式（基于度量的方法）；2）使用带有显式或隐式记忆储存的（循环）神经网络（基于模型的方法）；3）训练以快速学习为目标的模型（基于优化的方法）</summary></entry><entry><title type="html">OSVOS跟进</title><link href="http://localhost:4000/%E8%AE%BA%E6%96%87/2017/06/05/OSVOS%E8%B7%9F%E8%BF%9B.html" rel="alternate" type="text/html" title="OSVOS跟进" /><published>2017-06-04T22:00:00-04:00</published><updated>2017-06-04T22:00:00-04:00</updated><id>http://localhost:4000/%E8%AE%BA%E6%96%87/2017/06/05/OSVOS%E8%B7%9F%E8%BF%9B</id><content type="html" xml:base="http://localhost:4000/%E8%AE%BA%E6%96%87/2017/06/05/OSVOS%E8%B7%9F%E8%BF%9B.html">&lt;h2 id=&quot;semantically-guided-video-object-segmentation&quot;&gt;Semantically-Guided Video Object Segmentation&lt;/h2&gt;
+&lt;p&gt;[14] &lt;a href=&quot;https://www.slideshare.net/YoonhoLee4/on-firstorder-metalearning-algorithms&quot;&gt;Slides on Reptile&lt;/a&gt; by Yoonho Lee.&lt;/p&gt;</content><author><name></name></author><category term="meta-learning" /><category term="long-read" /><summary type="html">学习如何学习的方法被称为元学习。元学习的目标是在接触到没见过的任务或者迁移到新环境中时，可以根据之前的经验和少量的样本快速学习如何应对。元学习有三种常见的实现方法：1）学习有效的距离度量方式（基于度量的方法）；2）使用带有显式或隐式记忆储存的（循环）神经网络（基于模型的方法）；3）训练以快速学习为目标的模型（基于优化的方法）</summary></entry><entry><title type="html">瞎扯</title><link href="http://localhost:4000/%E7%9E%8E%E6%89%AF/2019/07/21/%E7%9E%8E%E6%89%AF.html" rel="alternate" type="text/html" title="瞎扯" /><published>2019-07-20T22:00:00-04:00</published><updated>2019-07-20T22:00:00-04:00</updated><id>http://localhost:4000/%E7%9E%8E%E6%89%AF/2019/07/21/%E7%9E%8E%E6%89%AF</id><content type="html" xml:base="http://localhost:4000/%E7%9E%8E%E6%89%AF/2019/07/21/%E7%9E%8E%E6%89%AF.html">&lt;h2 id=&quot;瞎扯&quot;&gt;瞎扯&lt;/h2&gt;
+
+&lt;p&gt;测试公式
+&lt;script type=&quot;math/tex&quot;&gt;A^x_y = F_{uck}&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;测试一下github.io&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/2019-07-21-瞎扯/fuck.png&quot; alt=&quot;fuck&quot; /&gt;&lt;/p&gt;</content><author><name></name></author><summary type="html">瞎扯</summary></entry><entry><title type="html">OSVOS跟进</title><link href="http://localhost:4000/%E8%AE%BA%E6%96%87/2017/06/05/OSVOS%E8%B7%9F%E8%BF%9B.html" rel="alternate" type="text/html" title="OSVOS跟进" /><published>2017-06-04T22:00:00-04:00</published><updated>2017-06-04T22:00:00-04:00</updated><id>http://localhost:4000/%E8%AE%BA%E6%96%87/2017/06/05/OSVOS%E8%B7%9F%E8%BF%9B</id><content type="html" xml:base="http://localhost:4000/%E8%AE%BA%E6%96%87/2017/06/05/OSVOS%E8%B7%9F%E8%BF%9B.html">&lt;h2 id=&quot;semantically-guided-video-object-segmentation&quot;&gt;Semantically-Guided Video Object Segmentation&lt;/h2&gt;
 
 &lt;p&gt;这篇论文我很喜欢，更符合人类的认知过程。&lt;/p&gt;
 
