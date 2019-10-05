@@ -2,7 +2,7 @@ title: Tianhao's Blog
 name: "Tianhao's Tech Blog"
 author: Tianhao Wei
 twitter_username: wei_tianhao
-baseurl: ""
+baseurl: "/blog"
 description: Document my learning notes.
 profile_url: "http://wei-tianhao.github.io"
 
