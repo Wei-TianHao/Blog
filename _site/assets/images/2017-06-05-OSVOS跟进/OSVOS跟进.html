@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    
+      
+
+
+
+
+
+
+    
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Semantically-Guided Video Object Segmentation</title>
+    <meta name="description" content="随便写写，都是骗人的">
+
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="canonical" href="http://localhost:4000/assets/images/2017-06-05-OSVOS%E8%B7%9F%E8%BF%9B/OSVOS%E8%B7%9F%E8%BF%9B.html">
+
+    <!-- For Latex -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+
+    <!-- Google Analytics -->
+    <script>
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-8161570-6', 'auto');
+        ga('send', 'pageview');
+    </script>
+
+    <!-- For Facebook share button -->
+    <div id="fb-root"></div>
+    <script>
+      (function(d, s, id) {
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) return;
+        js = d.createElement(s); js.id = id;
+        js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.9";
+        fjs.parentNode.insertBefore(js, fjs);
+      }(document, 'script', 'facebook-jssdk'));
+    </script>
+
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+    <div class="wrapper">
+        
+        <a class="site-title" href="/">Tianhao</a>
+
+        <nav class="site-nav">
+            <a class="page-link" href="http://Wei-Tianhao.github.io" target="_blank">&#x1f349; About</a>
+        </nav>
+
+        <nav class="site-nav">
+            <a class="page-link" href="/contact.html">&#x1f4ee; Contact</a>
+        </nav>
+
+    </div>
+
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <h2 id="semantically-guided-video-object-segmentation">Semantically-Guided Video Object Segmentation</h2>
+
+<p>这篇论文我很喜欢，更符合人类的认知过程。</p>
+
+<p>该篇论文提出的方法是模拟人类在视频中追踪物体的情形，人们在视频追踪的时候分为两种情形，一种是连续的画面，那很自然的就由上一帧的物体所在点过渡过来；但是当漏了几秒没看的时候，人们是怎么识别物体的呢？这就是该篇论文的出发点，语义分析追踪。即我第一帧看到了车，在画面不能连续起来的时候我就去找“车”这个语义在图片哪里。</p>
+
+<p>对于第一帧图片使用FCN对图片中的各种物体做出像素级预测，然后寻找与mask重合最多的预测，比如说是car。对后面的帧预测的时候，即可先对图片做语义分割，然后找语义为car的预测，在于上一帧的mask结合，做出预测。总体结构如下<img src="/Users/wth/Desktop/OSVOS/屏幕快照 2017-06-05 上午12.15.02.png" alt="屏幕快照 2017-06-05 上午12.15.02" /></p>
+
+<p>论文还提出了一个conditional classifier layer，主要功能是视情况结合propagation的结果和semantic segmentation的结果。比如物体移动非常剧烈的时候只采用semantic segmentation，放弃propagation的mask；而又多个相同语义的物体时则要侧重于propagation的结果（具体实现以后还要再看下）。</p>
+
+<p><img src="/Users/wth/Desktop/OSVOS/屏幕快照 2017-06-05 上午12.17.36.png" alt="屏幕快照 2017-06-05 上午12.17.36" /></p>
+
+<p>这篇论文我觉的最符合人类的直观认识，不知道还能不能再从这方面深入挖掘一下。</p>
+
+<h2 id="lucid-data-dreaming-for-object-tracking">Lucid Data Dreaming for Object Tracking</h2>
+
+<p>该篇论文主要提出了一种增强数据的方法，可以只用训练集里的数据就达到较好的效果。</p>
+
+<p>按照以下五步来</p>
+
+<ol>
+  <li>光照随机变化，变换HSV中S和V</li>
+  <li>把前景抠出来，补全背景</li>
+  <li>随机移动、变形前景</li>
+  <li>随机模拟相机变化，平移、旋转、放缩</li>
+  <li>前景背景结合</li>
+</ol>
+
+<p><img src="/Users/wth/Desktop/OSVOS/屏幕快照 2017-06-04 下午11.54.18.png" alt="屏幕快照 2017-06-04 下午11.57.37" /></p>
+
+<p>作者用一帧生成$10^3$级别的训练数据，效果相同的情形下数据量仅为原来的$\frac1{100}$到$\frac1{20}$。这种数据生成是跟网络完全独立的，可以用在以后的训练中。</p>
+
+<p>作者训练用的模型是结合上一帧的mask与optical flow的模型，不是本文研究的重点，简要介绍了一下。</p>
+
+<p><img src="/Users/wth/Desktop/OSVOS/屏幕快照 2017-06-04 下午11.57.37.png" alt="屏幕快照 2017-06-04 下午11.57.37" /></p>
+
+<h2 id="learning-video-object-segmentation-from-static-images">Learning Video Object Segmentation from Static Images</h2>
+
+<p>这篇论文提出将视频vido object segmentation看做是guided instance segmentation。本文的模型是先用静态图像预训练convnet，再由视频中的前几帧引导，生成高精确度的分割。</p>
+
+<p><img src="/Users/wth/Desktop/OSVOS/屏幕快照 2017-06-03 下午12.08.47.png" alt="屏幕快照 2017-06-03 下午12.08.47" /></p>
+
+<p>模型的关键在于离线和在线算法的结合，离线算法用于学习物体的特征，在线算法refine mask。大步骤跟OSVOS基本一致，但本质思想不同</p>
+
+<h3 id="与osvos的区别">与OSVOS的区别</h3>
+
+<ol>
+  <li>
+    <p>总体思路是Mask Track，而OSVOS则是Mask再识别。对于当前帧的预测，该篇论文使用当前帧帧的前几帧做引导，但OSVOS只是用了视频的第一帧，即没有propagation的过程。只用第一帧可能会导致效果随着时间下降（与第一帧差异越来越大）。</p>
+  </li>
+  <li>
+    <ul>
+      <li>第一步pre-training，同样是图像识别</li>
+      <li>第二步offline training，OSVOS是使用训练集使网络学习mask的广义概念，而该篇则注重使网络学习如何propagating（根据前几帧的mask和当前帧推导出当前帧的mask）</li>
+      <li>第三步online training，同样是使用test视频的一张标注来refine，而OSVOS还有轮廓的CNN预测来提高精确度。该篇的refine是通过对第一张mask进行各种变换形成许多训练数据，用这些数据训练网络，在test时用第一张标注辅助propagation（类似广义mask）</li>
+      <li>Test，OSVOS只用第一张进行mask预测，该篇除了使用propagation以外也同样将第一张标注用于所有图像的mask预测</li>
+    </ul>
+
+    <p>主要区别在于第二步，第三步中OSVOS的轮廓预测是独立的模块，可以应用到该篇</p>
+  </li>
+</ol>
+
+<h3 id="训练细节">训练细节</h3>
+
+<p>使用的网络是DeepLabv2-VGG network，</p>
+
+<p>第二步的实际训练方式是先将前一帧的mask做一些形态学变换模拟各种噪声，增大数据量，同时使用图片识别的mask进行一些形态学变换，来模拟前一帧与当前帧的差异。这样就可以使用图片识别的数据集进行训练，数据量大大提升。）</p>
+
+<p><img src="/Users/wth/Desktop/OSVOS/屏幕快照 2017-06-03 下午12.09.00.png" alt="屏幕快照 2017-06-03 下午12.09.00" /></p>
+
+<p>作者还提出了几种guidence的变体，有box annotation和optical flow</p>
+
+<p>第一张的online finetuning要200次迭代，加上第一张的fintuning平均每帧的预测要12秒</p>
+
+<h2 id="automatic-real-time-background-cut-for-portrait-videos">Automatic Real-time Background Cut for Portrait Videos</h2>
+
+<p>这篇论文是讲怎么从视频里实时抠出人像的，主要是借鉴OSVOS来学习背景。</p>
+
+<p>该网络先学习许多背景的采样，再跟原视频结合，达到更好的消除效果，称为global attenuation</p>
+
+<p><img src="/Users/wth/Desktop/屏幕快照 2017-06-05 上午12.25.38.png" alt="屏幕快照 2017-06-05 上午12.25.38" /></p>
+
+<p>感觉这个问题与video object segmentation差别比较大，因为人的大小基本恒定，而且背景一般是静态的。该网络对于动态背景的表现很差。</p>
+
+<p>启发点可能有对于背景的学习是否可以更重视一些？</p>
+
+<h2 id="deeply-supervised-salient-object-detection-with-short-connections">Deeply Supervised Salient Object Detection with Short Connections</h2>
+
+<p>在HED中，深层的side outputs主要用于定位，浅层的side outputs主要用于表达细节，这启发了作者使用short connections在HED内部构建skip-layer，更好的结合深层与浅层的能力。下图的c和d是作者提出的模型。（以下暂称SCHED(short connected HED)，作者没给官方简称…）</p>
+
+<p><img src="/Users/wth/Desktop/OSVOS/屏幕快照 2017-06-04 下午9.59.57.png" alt="屏幕快照 2017-06-04 下午9.59.57" /></p>
+
+<p>这个网络的具体应用我觉得可以有以下几种途径</p>
+
+<ol>
+  <li>OSVOS跟进，用这个网络与ImageNet预训练的网络（或者合并成一个预训练过的网络）共同学习如何区分前景和后景，提升OSVOS区分mask的能力，总体步骤不变。
+    <ul>
+      <li>优势：mask一般是salient object，应该学习起来比较容易，而且SCHED带有轮廓学习能力，可以省略OSVOS中的轮廓CNN，提升速度，简化模型</li>
+      <li>劣势：有时候mask是不起眼的物体，比如远处来的赛车，一开始很小，这种情况可能学习起来比较困难</li>
+    </ul>
+  </li>
+  <li>Learning Video Object Segmentation from Static Images跟进，用SCHED代替optical flow，与propagation结合
+    <ul>
+      <li>优势，更快，轮廓更精确</li>
+      <li>劣势，没有明显的理由表明会提升表现</li>
+    </ul>
+  </li>
+</ol>
+
+<p>##</p>
+
+      </div>
+    </main>
+
+    <div style="clear: both;"/>
+<footer class="site-footer">
+    2018 &copy; Built by <a href="https://jekyllrb.com/" target="_blank">Jekyll</a> and <a href="https://github.com/jekyll/minima/" target="_blank">minima</a> | View <a href="https://github.com/Wei-TianHao/Wei-TianHao.github.io" target="_blank">this</a> on Github
+
+    <p>
+        <a href="//feed.xml" target="_blank">
+            <img src="/assets/images/logo_rss.png" />
+        </a>
+        <!-- <a href="https://scholar.google.com/citations?user=dCa-pW8AAAAJ&hl=en&oi=ao" target="_blank">
+            <img src="/assets/images/logo_scholar.png" />
+        </a> -->
+        <a href="https://github.com/Wei-TianHao" target="_blank">
+            <img src="/assets/images/logo_github.png" />
+        </a>
+        <!-- <a href="https://www.instagram.com/lilianweng/" target="_blank">
+            <img src="/assets/images/logo_instagram.png" />
+        </a> -->
+    </p>
+</footer>
+
+
+  </body>
+
+</html>

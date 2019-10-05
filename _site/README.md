@@ -1,3 +1,2 @@
-# Wei-TianHao.github.io
-my blog
-
+# Lil'Log
+Lilian's Blog

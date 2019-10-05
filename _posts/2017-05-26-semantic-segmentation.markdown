@@ -17,7 +17,7 @@ categories: 论文
 
 这篇论文开创了利用深度卷积神经网络进行图像识别的方法。也就是著名的AlexNet，结构如下图，5个卷积层，3个全连接层：
 
-![044A5076-2F92-4F13-BC6C-B16399096979](/assets/2017-05-26-semantic-segmentation/044A5076-2F92-4F13-BC6C-B16399096979.png)
+![044A5076-2F92-4F13-BC6C-B16399096979](../assets/images/2017-05-26-semantic-segmentation/044A5076-2F92-4F13-BC6C-B16399096979.png)
 
 虽然AlexNet不是CNN的开创者，但他使用了许多技术使得CNN的识别能力大幅提高并已成为现在的标准配置，有
 
@@ -36,13 +36,13 @@ categories: 论文
 
 这篇论文最早提出了全卷积网络的概念，想法其实很简单，CNN的输出是一维的向量，如果我们把最后面的FC层全都换成卷积层，就可以输出二维向量了，下图就是AlexNet卷积化后形成的全卷积网络：
 
-![AD9967C8-2C82-411F-9322-FCF3743CF1C4](/assets/2017-05-26-semantic-segmentation/AD9967C8-2C82-411F-9322-FCF3743CF1C4.png)
+![AD9967C8-2C82-411F-9322-FCF3743CF1C4](../assets/images/2017-05-26-semantic-segmentation/AD9967C8-2C82-411F-9322-FCF3743CF1C4.png)
 
 而且因为FCN与CNN结构非常相似，任务也比较接近，可以利用CNN训练好的网络进行Fine tuning，节省训练时间。而且在计算卷积的时候因为receptive fields重叠的非常多，所以训练很高效（这里不是很懂。。）
 
 但从图中可以看出，这样最终生成的图像是比原来小的，而语义分割需要得到与原图同样大小的图像，那怎么办呢？接着论文提出了upsampling，deconvolution（CS231n里讲这个名字被吐槽的很多，叫conv transpose之类的比较好）的技巧（本质就是插值）。Deconvolution实际上就是将卷积的正向传播和反向传播反过来。反向卷积能否学习对于表现没有明显提升，所以学习率被置零了。但deconvolution又带来了一个问题，就是分辨率的问题，很容易想象出来，好比一张小照片被放大了一样，非常模糊。为了解决这个问题，作者又提出了skip layer的方法，即将前面的卷积层与后面同样大小的反卷积层结合起来。
 
-![1705275F-792B-4BA4-8A47-72B219882490](/assets/2017-05-26-semantic-segmentation/1705275F-792B-4BA4-8A47-72B219882490.png)
+![1705275F-792B-4BA4-8A47-72B219882490](../assets/images/2017-05-26-semantic-segmentation/1705275F-792B-4BA4-8A47-72B219882490.png)
 
 
 
@@ -58,9 +58,9 @@ categories: 论文
 
 作者首先更改了最后两层池化层，把pooling的stride改为1，同时加上1个padding，这样池化后像素的个数就不再改变了。
 
-![766fc04b86b72f7e09d8f8ff6cb648e2_r](/assets/2017-05-26-semantic-segmentation/766fc04b86b72f7e09d8f8ff6cb648e2_r-1.png)
+![766fc04b86b72f7e09d8f8ff6cb648e2_r](../assets/images/2017-05-26-semantic-segmentation/766fc04b86b72f7e09d8f8ff6cb648e2_r-1.png)
 
-上图的a是原来的池化，b是更改后的池化，c是为了增加感受野带洞的卷积atrous conv。（**==这里池化和卷积分的不太清楚，之后看下代码==**）为什么要带洞呢，是因为b图的感受野是比a要小的，可以看出b图中池化后的连续三个像素对应着池化前的5个，而a图则对应着7个。这会导致全局性的削弱。因此作者收到atrous算法的启发，加上了洞。在扩大分辨率的同时保持了感受野。更改后输出的预测图的大小是原来的4倍，下图直观展示了效果，下图是先将一张图片downsample为1/2，然后分别使用竖向高斯导数卷积核和atrous核，最后再upsampling，高斯核只能得到原图的1/4坐标的预测，而atrous核能得到全部像素的预测![屏幕快照 2017-05-26 上午11.05.02](/assets/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 上午11.05.02.png)
+上图的a是原来的池化，b是更改后的池化，c是为了增加感受野带洞的卷积atrous conv。（**==这里池化和卷积分的不太清楚，之后看下代码==**）为什么要带洞呢，是因为b图的感受野是比a要小的，可以看出b图中池化后的连续三个像素对应着池化前的5个，而a图则对应着7个。这会导致全局性的削弱。因此作者收到atrous算法的启发，加上了洞。在扩大分辨率的同时保持了感受野。更改后输出的预测图的大小是原来的4倍，下图直观展示了效果，下图是先将一张图片downsample为1/2，然后分别使用竖向高斯导数卷积核和atrous核，最后再upsampling，高斯核只能得到原图的1/4坐标的预测，而atrous核能得到全部像素的预测![屏幕快照 2017-05-26 上午11.05.02](../assets/images/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 上午11.05.02.png)
 
 atrous具体的实现方法有两种，一种是往卷积核里插0，一种是把图片subsample，然后再标准卷积
 
@@ -70,7 +70,7 @@ atrous具体的实现方法有两种，一种是往卷积核里插0，一种是�
 
 不同尺寸目标的问题。一个好的解决方案是对于不同尺寸分别做DCNN，但这样太慢了，所以作者用了ASPP，并行的使用多个rate不同的atrous conv，这些卷积核共享参数，所以训练快了很多。如下图所示。
 
-![431DA9CC-7296-4224-B087-6FD7482B8733](/assets/2017-05-26-semantic-segmentation/431DA9CC-7296-4224-B087-6FD7482B8733.png)
+![431DA9CC-7296-4224-B087-6FD7482B8733](../assets/images/2017-05-26-semantic-segmentation/431DA9CC-7296-4224-B087-6FD7482B8733.png)
 
 #### 第三个问题
 
@@ -109,15 +109,15 @@ $$ \mu$$ 在$$ x_i, x_j$$ 相等的时候是0，不相等时是1（只会惩罚�
 3. 在PASCAL-Person-Part上训练的时候LargeFOV和ASPP对于训练效果都没有提升，但CRF的提升效果非常明显。技术有适用性吧，No free lunch theory.
 
 4. 从结果上来看CRF好像做了一些平滑和去噪的工作。（**==对于CRF理解还不太到位，之前感觉像是起到精细化的作用，这里主要是双边滤波在起作用？==**）
-   ![D93EE4D0-6893-45C5-B6D6-65E608C01E7B](/assets/2017-05-26-semantic-segmentation/D93EE4D0-6893-45C5-B6D6-65E608C01E7B.png)
+   ![D93EE4D0-6893-45C5-B6D6-65E608C01E7B](../assets/images/2017-05-26-semantic-segmentation/D93EE4D0-6893-45C5-B6D6-65E608C01E7B.png)
 
-   ![270A5970-D3CE-4C4D-86C0-86BC9E526AA3](/assets/2017-05-26-semantic-segmentation/270A5970-D3CE-4C4D-86C0-86BC9E526AA3.png)
-   ![E19801B2-2B12-443A-BB57-C9786F9AFF16](/assets/2017-05-26-semantic-segmentation/E19801B2-2B12-443A-BB57-C9786F9AFF16.png)
+   ![270A5970-D3CE-4C4D-86C0-86BC9E526AA3](../assets/images/2017-05-26-semantic-segmentation/270A5970-D3CE-4C4D-86C0-86BC9E526AA3.png)
+   ![E19801B2-2B12-443A-BB57-C9786F9AFF16](../assets/images/2017-05-26-semantic-segmentation/E19801B2-2B12-443A-BB57-C9786F9AFF16.png)
 
 5. Cityscapes的图片非常大，作者一开始先缩小了一半再训练的，但后来发现用原始大小的图片训练能提高1.9%，效果很明显（但我感觉缩小一半对于细节的损失并不是很大因为原始图片有2048*1024，可能是因为训练量上升了？）。作者的处理方法是把原始图片分割成几张有重叠区域的图片再训练，训练好了拼起来。
 
 6. Failure Modes，作者发现他们的模型难以抓住复杂的边界，如下图，甚至可能会被CRF完全抹掉，因为因为DCNN算出来的东西不够自信（零星、稀疏）。作者看好encoder-decoder结构能够解决这个问题
-   ![E7E2AC8F-283B-4374-B92F-2928E8E0C857](/assets/2017-05-26-semantic-segmentation/E7E2AC8F-283B-4374-B92F-2928E8E0C857.png)
+   ![E7E2AC8F-283B-4374-B92F-2928E8E0C857](../assets/images/2017-05-26-semantic-segmentation/E7E2AC8F-283B-4374-B92F-2928E8E0C857.png)
 
 ## Faster R-CNN:Towards Real-Time Object Detection with Region Proposal Networks
 
@@ -131,7 +131,7 @@ $$ \mu$$ 在$$ x_i, x_j$$ 相等的时候是0，不相等时是1（只会惩罚�
 
 为了生成region proposals，作者在最后一个共享卷积层输出的特征层上做slide window。把一个window里的通过一个全连接层，生成一个低维向量。这个向量接着再被喂进两个平行的全连接层，分别用于矩形定位和矩形分类打分。
 
-![E31B36A8-B635-46F8-A51D-F7154C75DDC8](/assets/2017-05-26-semantic-segmentation/E31B36A8-B635-46F8-A51D-F7154C75DDC8.png)
+![E31B36A8-B635-46F8-A51D-F7154C75DDC8](../assets/images/2017-05-26-semantic-segmentation/E31B36A8-B635-46F8-A51D-F7154C75DDC8.png)
 
 实际上这个slide window就是个卷积，后面的两层也是卷积层。对于每个window会提出k个region proposal。作者说这个方法有个很重要的属性是translation invariant（平移不变性，平移后仍能预测出相同大小的anchor boxes）。
 
@@ -170,7 +170,7 @@ i是anchor的index，$$ p_i$$ 是anchor i被预测为是一个物体的概率，
 
 下面是几种技术对于结果的影响的比较
 
-![屏幕快照 2017-05-26 上午11.14.58](/assets/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 上午11.14.58.png)
+![屏幕快照 2017-05-26 上午11.14.58](../assets/images/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 上午11.14.58.png)
 
 
 
@@ -182,7 +182,7 @@ i是anchor的index，$$ p_i$$ 是anchor i被预测为是一个物体的概率，
 
 基本思想是改变卷积层的核，原来核是一个方形，现在对于核中每个元素加上一个offset，卷积后的特征不再来源于一个方形，而可能来源于各种形状。
 
-![屏幕快照 2017-05-26 下午1.20.54](/assets/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 下午1.20.54.png)
+![屏幕快照 2017-05-26 下午1.20.54](../assets/images/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 下午1.20.54.png)
 
 原来的卷积公式是这样子：
 
@@ -214,15 +214,15 @@ $$ p_0$$ 是bin的左上角，p是枚举位置，$$ n_{ij}$$ 是bin内的元素�
 
 下图是使用了的deformable conv后感受野的变化
 
-![屏幕快照 2017-05-26 下午8.27.21](/assets/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 下午8.27.21.png)
+![屏幕快照 2017-05-26 下午8.27.21](../assets/images/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 下午8.27.21.png)
 
 而且因为核具有自己调整的特性，可以轻松识别出不同scale的物体，下图展示了这一特性，每张图片中的红点是三层卷积对应的感受野，绿点是最高层的中心
 
-![屏幕快照 2017-05-26 下午8.30.40](/assets/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 下午8.30.40.png)
+![屏幕快照 2017-05-26 下午8.30.40](../assets/images/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 下午8.30.40.png)
 
 对于RoI也是类似的效果，黄框的分数是由红框的平均值计算来的
 
-![屏幕快照 2017-05-26 下午8.30.49](/assets/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 下午8.30.49.png)
+![屏幕快照 2017-05-26 下午8.30.49](../assets/images/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 下午8.30.49.png)
 
 #### 与相关工作的对比
 
@@ -236,7 +236,7 @@ $$ p_0$$ 是bin的左上角，p是枚举位置，$$ n_{ij}$$ 是bin内的元素�
 
 几种网络应用了deformable conv后的效果比较：
 
-![屏幕快照 2017-05-26 下午8.59.34](/assets/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 下午8.59.34.png)
+![屏幕快照 2017-05-26 下午8.59.34](../assets/images/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 下午8.59.34.png)
 
 不知道为什么Faster R-CNN的提升效果最差（可能是RPN），而DeepLab应用6层deformable conv后效果反而变差了（猜测是感受野过大，容易分散，或在某些特征点收敛，过于集中，太关注于局部信息）
 

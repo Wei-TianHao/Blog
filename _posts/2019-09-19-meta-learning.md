@@ -30,7 +30,7 @@ tags: meta-learning long-read
 
 ### A Simple View
 
-我们现在假设有一个任务的分布，我们从这个分布中采样了许多任务作为训练集。好的元学习模型在这个训练集上训练后，应当对这个空间里所有的任务都具有良好的表现，即使是从来没见过的任务。每个任务可以表示为一个数据集$\mathcal{D}$，数据集中包括特征向量$x$和标签$y$，分布表示为$p(\mathcal{D})$。那么最佳的元学习模型参数可以表示为：
+我们现在假设有一个任务的分布，我们从这个分布中采样了许多任务作为训练集。好的元学习模型在这个训练集上训练后，应当对这个空间里所有的任务都具有良好的表现，即使是从来没见过的任务。每个任务可以表示为一个数据集$$\mathcal{D}$$，数据集中包括特征向量$$x$$和标签$$y$$，分布表示为$$p(\mathcal{D})$$。那么最佳的元学习模型参数可以表示为：
 
 $$
 \theta^* = \arg\min_\theta \mathbb{E}_{\mathcal{D}\sim p(\mathcal{D})} [\mathcal{L}_\theta(\mathcal{D})]
@@ -38,19 +38,19 @@ $$
 
 上式的形式跟一般的学习任务非常像，只不过上式中的每个*数据集*是一个*数据样本*。
 
-*少样本学习（Few-shot classification）* 是元学习的在监督学习中的一个实例。数据集$\mathcal{D}$经常被划分为两部分，一个用于学习的支持集（support set）$S$，和一个用于训练和测试的预测集（prediction set）$B$，即$\mathcal{D}=\langle S, B\rangle$。*K-shot N-class*分类任务，即支持集中有N类数据，每类数据有K个带有标注的样本。
+*少样本学习（Few-shot classification）* 是元学习的在监督学习中的一个实例。数据集$$\mathcal{D}$$经常被划分为两部分，一个用于学习的支持集（support set）$$S$$，和一个用于训练和测试的预测集（prediction set）$$B$$，即$$\mathcal{D}=\langle S, B\rangle$$。*K-shot N-class*分类任务，即支持集中有N类数据，每类数据有K个带有标注的样本。
 
 
-![few-shot-classification](../assets/2019-09-19-meta-learning/few-shot-classification.png)
+![few-shot-classification](../assets/images/2019-09-19-meta-learning/few-shot-classification.png)
 *Fig. 1. 4-shot 2-class 图像分类的例子。 (图像来自[Pinterest](https://www.pinterest.com/))*
 
 
 ### 像测试一样训练
 
 
-一个数据集$\mathcal{D}$包含许多对特征向量和标签，即$\mathcal{D} = \{(\mathbf{x}_i, y_i)\}$。每个标签属于一个标签类$\mathcal{L}$。假设我们的分类器$f_\theta$的输入是特征向量$\mathbf{x}$，输出是属于第$y$类的概率$P_\theta(y\vert\mathbf{x})$，$\theta$是分类器的参数。 
+一个数据集$$\mathcal{D}$$包含许多对特征向量和标签，即$$\mathcal{D} = \{(\mathbf{x}_i, y_i)\}$$。每个标签属于一个标签类$$\mathcal{L}$$。假设我们的分类器$$f_\theta$$的输入是特征向量$$\mathbf{x}$$，输出是属于第$$y$$类的概率$$P_\theta(y\vert\mathbf{x})$$，$$\theta$$是分类器的参数。 
 
-如果我们每次选一个$B \subset \mathcal{D}$作为训练的batch，则最佳的模型参数，应当能够最大化，多组batch的正确标签概率之和。
+如果我们每次选一个$$B \subset \mathcal{D}$$作为训练的batch，则最佳的模型参数，应当能够最大化，多组batch的正确标签概率之和。
 
 $$
 \begin{aligned}
@@ -60,12 +60,12 @@ $$
 $$
 
 few-shot classification的目标是，在小规模的support set上“快速学习”（类似fine-tuning）后，能够减少在prediction set上的预测误差。为了训练模型快速学习的能力，我们在训练的时候按照以下步骤：
-1. 采样一个标签的子集, $L\subset\mathcal{L}$.
-2. 根据采样的标签子集，采样一个support set $S^L \subset \mathcal{D}$ 和一个training batch $B^L \subset \mathcal{D}$。$S^L$和$B^L$中的数据的标签都属于$L$，即$y \in L, \forall (x, y) \in S^L, B^L$.
+1. 采样一个标签的子集, $$L\subset\mathcal{L}$$.
+2. 根据采样的标签子集，采样一个support set $$S^L \subset \mathcal{D}$$ 和一个training batch $$B^L \subset \mathcal{D}$$。$$S^L$$和$$B^L$$中的数据的标签都属于$$L$$，即$$y \in L, \forall (x, y) \in S^L, B^L$$.
 3. 把support set作为模型的输入，进行“快速学习”。注意，不同的算法具有不同的学习策略，但总的来说，这一步不会永久性更新模型参数。 <!-- , $$\hat{y}=f_\theta(\mathbf{x}, S^L)$$ -->
-4. 把prediction set作为模型的输入，计算模型在$B^L$上的loss，根据这个loss进行反向传播更新模型参数。这一步与监督学习一致。
+4. 把prediction set作为模型的输入，计算模型在$$B^L$$上的loss，根据这个loss进行反向传播更新模型参数。这一步与监督学习一致。
 
-你可以把每一对$(S^L, B^L)$看做是一个数据点。模型被训练出了在其他数据集上扩展的能力。下式中的红色部分是元学习的目标相比于监督学习的目标多出来的部分。
+你可以把每一对$$(S^L, B^L)$$看做是一个数据点。模型被训练出了在其他数据集上扩展的能力。下式中的红色部分是元学习的目标相比于监督学习的目标多出来的部分。
 
 $$
 \theta = \arg\max_\theta \color{red}{E_{L\subset\mathcal{L}}[} E_{\color{red}{S^L \subset\mathcal{D}, }B^L \subset\mathcal{D}} [\sum_{(x, y)\in B^L} P_\theta(x, y\color{red}{, S^L})] \color{red}{]}
@@ -76,10 +76,10 @@ $$
 ### 学习器和元学习器
 
 还有一种常见的看待meta-learning的视角，把模型的更新划分为了两个阶段：
-- 根据给定的任务，训练一个分类器$f_\theta$完成任务，作为“学习器”模型
-- 同时，训练一个元学习器$g_\phi$，根据support set $S$学习如何更新学习器模型的参数。$\theta' = g_\phi(\theta, S)$
+- 根据给定的任务，训练一个分类器$$f_\theta$$完成任务，作为“学习器”模型
+- 同时，训练一个元学习器$$g_\phi$$，根据support set $$S$$学习如何更新学习器模型的参数。$$\theta' = g_\phi(\theta, S)$$
 
-则最后的优化目标中，我们需要更新$\theta$和$\phi$来最大化：
+则最后的优化目标中，我们需要更新$$\theta$$和$$\phi$$来最大化：
 
 $$
 \mathbb{E}_{L\subset\mathcal{L}}[ \mathbb{E}_{S^L \subset\mathcal{D}, B^L \subset\mathcal{D}} [\sum_{(\mathbf{x}, y)\in B^L} P_{g_\phi(\theta, S^L)}(y \vert \mathbf{x})]]
@@ -96,16 +96,16 @@ Oriol Vinyals在meta-learning symposium @ NIPS 2018上做了一个很好的[总�
 |  | Model-based | Metric-based | Optimization-based |
 | ------------- | ------------- | ------------- | ------------- |
 | **Key idea** | RNN; memory | Metric learning | Gradient descent |
-| **How $P_\theta(y \vert \mathbf{x})$ is modeled?** | $f_\theta(\mathbf{x}, S)$ | $\sum_{(\mathbf{x}_i, y_i) \in S} k_\theta(\mathbf{x}, \mathbf{x}_i)y_i$ (*) | $P_{g_\phi(\theta, S^L)}(y \vert \mathbf{x})$ |
+| **How $$P_\theta(y \vert \mathbf{x})$$ is modeled?** | $$f_\theta(\mathbf{x}, S)$$ | $$\sum_{(\mathbf{x}_i, y_i) \in S} k_\theta(\mathbf{x}, \mathbf{x}_i)y_i$$ (*) | $$P_{g_\phi(\theta, S^L)}(y \vert \mathbf{x})$$ |
 
-(*) $k_\theta$ 是一个衡量$\mathbf{x}_i$和$\mathbf{x}$相似度的kernel function。
+(*) $$k_\theta$$ 是一个衡量$$\mathbf{x}_i$$和$$\mathbf{x}$$相似度的kernel function。
 
 接下来我们会回顾各种方法的经典模型。
 
 
 ## Metric-Based
 
-Metric-based meta-learning的核心思想类似于最近邻算法([k-NN分类](https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm)、[k-means聚类](https://en.wikipedia.org/wiki/K-means_clustering))和[核密度估计](https://en.wikipedia.org/wiki/Kernel_density_estimation)。该类方法在已知标签的集合上预测出来的概率，是support set中的样本标签的加权和。 权重由核函数（kernal function）$k_\theta$算得，该权重代表着两个数据样本之间的相似性。
+Metric-based meta-learning的核心思想类似于最近邻算法([k-NN分类](https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm)、[k-means聚类](https://en.wikipedia.org/wiki/K-means_clustering))和[核密度估计](https://en.wikipedia.org/wiki/Kernel_density_estimation)。该类方法在已知标签的集合上预测出来的概率，是support set中的样本标签的加权和。 权重由核函数（kernal function）$$k_\theta$$算得，该权重代表着两个数据样本之间的相似性。
 
 $$
 P_\theta(y \vert \mathbf{x}, S) = \sum_{(\mathbf{x}_i, y_i) \in S} k_\theta(\mathbf{x}, \mathbf{x}_i)y_i 
@@ -121,11 +121,11 @@ $$
 
 [Koch, Zemel & Salakhutdinov (2015)](http://www.cs.toronto.edu/~rsalakhu/papers/oneshot1.pdf)提出了一种用siamese网络做one-shot image classification的方法。首先，训练一个用于图片验证的siamese网络，分辨两张图片是否属于同一类。然后在测试时，siamese网络把测试输入和support set里面的所有图片进行比较，选择相似度最高的那张图片所属的类作为输出。
 
-![siamese](../assets/2019-09-19-meta-learning/siamese-conv-net.png)
+![siamese](/assets/images/2019-09-19-meta-learning/siamese-conv-net.png)
 *Fig. 2. 卷积siamese网络用于few-shot image classification的例子。*
 
-1. 首先，卷积siamese网络学习一个由多个卷积层组成的embedding函数$f_\theta$，把两张图片编码为特征向量。
-2. 两个特征向量之间的L1距离可以表示为$\vert f_\theta(\mathbf{x}_i) - f_\theta(\mathbf{x}_j) \vert$。
+1. 首先，卷积siamese网络学习一个由多个卷积层组成的embedding函数$$f_\theta$$，把两张图片编码为特征向量。
+2. 两个特征向量之间的L1距离可以表示为$$\vert f_\theta(\mathbf{x}_i) - f_\theta(\mathbf{x}_j) \vert$$。
 3. 通过一个linear feedforward layer和sigmoid把距离转换为概率。这就是两张图片属于同一类的概率。
 4. loss函数就是cross entropy loss，因为label是二元的。
 
@@ -138,24 +138,24 @@ p(\mathbf{x}_i, \mathbf{x}_j) &= \sigma(\mathbf{W}\vert f_\theta(\mathbf{x}_i) -
 \end{aligned}
 $$
 
-Training batch $B$可以通过对图片做一些变形增加数据量。你也可以把L1距离替换成其他距离，比如L2距离、cosine距离等等。只要距离是可导的就可以。
+Training batch $$B$$可以通过对图片做一些变形增加数据量。你也可以把L1距离替换成其他距离，比如L2距离、cosine距离等等。只要距离是可导的就可以。
 
-给定一个支持集$S$和一个测试图片$\mathbf{x}$，最终预测的分类为：
+给定一个支持集$$S$$和一个测试图片$$\mathbf{x}$$，最终预测的分类为：
 
 $$
 \hat{c}_S(\mathbf{x}) = c(\arg\max_{\mathbf{x}_i \in S} P(\mathbf{x}, \mathbf{x}_i))
 $$
 
-$c(\mathbf{x})$是图片$\mathbf{x}$的label，$\hat{c}(.)$是预测的label。
+$$c(\mathbf{x})$$是图片$$\mathbf{x}$$的label，$$\hat{c}(.)$$是预测的label。
 
 这里我们有一个假设：学到的embedding在未见过的分类上依然能很好的衡量图片间的距离。这个假设跟迁移学习中使用预训练模型所隐含的假设是一样的。比如，在ImageNet上预训练的模型，其学到的卷积特征表达方式对于其他图像任务也有帮助。但实际上当新任务与旧任务有所差别的时候，预训练模型的效果就没有那么好了。
 
 ### Matching Networks
 
 
-**Matching Networks** ([Vinyals et al., 2016](http://papers.nips.cc/paper/6385-matching-networks-for-one-shot-learning.pdf))的目标是：对于每一个给定的支持集$S=\{x_i, y_i\}_{i=1}^k$ (*k-shot* classification)，分别学一个分类器$c_S$。 这个分类器给出了给定测试样本$\mathbf{x}$时，输出$y$的概率分布。这个分类器的输出被定义为支持集中一系列label的加权和，权重由一个注意力核（attention kernel）$a(\mathbf{x}, \mathbf{x}_i)$决定。权重应当与$\mathbf{x}$和$\mathbf{x}_i$间的相似度成正比。
+**Matching Networks** ([Vinyals et al., 2016](http://papers.nips.cc/paper/6385-matching-networks-for-one-shot-learning.pdf))的目标是：对于每一个给定的支持集$$S=\{x_i, y_i\}_{i=1}^k$$ (*k-shot* classification)，分别学一个分类器$$c_S$$。 这个分类器给出了给定测试样本$$\mathbf{x}$$时，输出$$y$$的概率分布。这个分类器的输出被定义为支持集中一系列label的加权和，权重由一个注意力核（attention kernel）$$a(\mathbf{x}, \mathbf{x}_i)$$决定。权重应当与$$\mathbf{x}$$和$$\mathbf{x}_i$$间的相似度成正比。
 
-<img src="../assets/2019-09-19-meta-learning/matching-networks.png" width="70%">
+<img src="../assets/images/2019-09-19-meta-learning/matching-networks.png" width="70%">
 
 *Fig. 3. Matching Networks结构。（图像来源: [original paper](http://papers.nips.cc/paper/6385-matching-networks-for-one-shot-learning.pdf)）*
 
@@ -165,7 +165,7 @@ c_S(\mathbf{x}) = P(y \vert \mathbf{x}, S) = \sum_{i=1}^k a(\mathbf{x}, \mathbf{
 \text{, where }S=\{(\mathbf{x}_i, y_i)\}_{i=1}^k
 $$
 
-Attention kernel由两个embedding function $f$和$g$决定。分别用于encoding测试样例和支持集样本。两个样本之间的注意力权重是经过softmax归一化后的，他们embedding vectors的cosine距离$\text{cosine}(.)$。
+Attention kernel由两个embedding function $$f$$和$$g$$决定。分别用于encoding测试样例和支持集样本。两个样本之间的注意力权重是经过softmax归一化后的，他们embedding vectors的cosine距离$$\text{cosine}(.)$$。
 
 $$
 a(\mathbf{x}, \mathbf{x}_i) = \frac{\exp(\text{cosine}(f(\mathbf{x}), g(\mathbf{x}_i))}{\sum_{j=1}^k\exp(\text{cosine}(f(\mathbf{x}), g(\mathbf{x}_j))}
@@ -174,17 +174,17 @@ $$
 
 #### Simple Embedding
 
-在简化版本里，embedding function是一个使用单样本作为输入的神经网络。而且我们可以假设$f=g$。
+在简化版本里，embedding function是一个使用单样本作为输入的神经网络。而且我们可以假设$$f=g$$。
 
 #### Full Context Embeddings
 
-Embeding vectors对于构建一个好的分类器至关重要。只把一个数据样本作为embedding function的输入，会导致很难高效的估计出整个特征空间。因此，Matching Network模型又进一步发展，通过把整个支持集$S$作为embedding function的额外输入来加强embedding的有效性，相当于给样本添加了语境，让embedding根据样本与支持集中样本的关系进行调整。
+Embeding vectors对于构建一个好的分类器至关重要。只把一个数据样本作为embedding function的输入，会导致很难高效的估计出整个特征空间。因此，Matching Network模型又进一步发展，通过把整个支持集$$S$$作为embedding function的额外输入来加强embedding的有效性，相当于给样本添加了语境，让embedding根据样本与支持集中样本的关系进行调整。
 
 
-- $g_\theta(\mathbf{x}_i, S)$在整个支持集$S$的语境下用一个双向LSTM来编码$\mathbf{x}_i$.
+- $$g_\theta(\mathbf{x}_i, S)$$在整个支持集$$S$$的语境下用一个双向LSTM来编码$$\mathbf{x}_i$$.
 
-- $f_\theta(\mathbf{x}, S)$在支持集$S$上使用read attention机制编码测试样本$\mathbf{x}$。
-    1. 首先测试样本经过一个简单的神经网络，比如CNN，以抽取基本特征$f'(\mathbf{x})$。
+- $$f_\theta(\mathbf{x}, S)$$在支持集$$S$$上使用read attention机制编码测试样本$$\mathbf{x}$$。
+    1. 首先测试样本经过一个简单的神经网络，比如CNN，以抽取基本特征$$f'(\mathbf{x})$$。
     2. 然后，一个带有read attention vector的LSTM被训练用于生成部分hidden state：<br/>
     $$
     \begin{aligned}
@@ -194,7 +194,7 @@ Embeding vectors对于构建一个好的分类器至关重要。只把一个数�
     a(\mathbf{h}_{t-1}, g(\mathbf{x}_i)) &= \text{softmax}(\mathbf{h}_{t-1}^\top g(\mathbf{x}_i)) = \frac{\exp(\mathbf{h}_{t-1}^\top g(\mathbf{x}_i))}{\sum_{j=1}^k \exp(\mathbf{h}_{t-1}^\top g(\mathbf{x}_j))}
     \end{aligned}
     $$
-    1. 最终，如果我们做k步的读取$f(\mathbf{x}, S)=\mathbf{h}_K$。
+    1. 最终，如果我们做k步的读取$$f(\mathbf{x}, S)=\mathbf{h}_K$$。
 
 这类embedding方法被称作“全语境嵌入”（Full Contextual Embeddings）。有意思的是，这类方法对于困难的任务（few-shot classification on mini ImageNet）有所帮助，但对于简单的任务却没有提升（Omniglot）。
 
@@ -209,8 +209,8 @@ $$
 ### Relation Network
 
 **Relation Network (RN)** ([Sung et al., 2018](http://openaccess.thecvf.com/content_cvpr_2018/papers_backup/Sung_Learning_to_Compare_CVPR_2018_paper.pdf))与[siamese network](#convolutional-siamese-neural-network)有所相似，但有以下几个不同点：
-1. 两个样本间的相似系数不是由特征空间的L1距离决定的，而是由一个CNN分类器$g_\phi$预测的。两个样本$\mathbf{x}_i$和$\mathbf{x}_j$间的相似系数为$r_{ij} = g_\phi([\mathbf{x}_i, \mathbf{x}_j])$，其中$[.,.]$代表着concatenation。
-2. 目标优化函数是MSE损失，而不是cross-entropy，因为RN在预测时更倾向于把相似系数预测过程作为一个regression问题，而不是二分类问题，$\mathcal{L}(B) = \sum_{(\mathbf{x}_i, \mathbf{x}_j, y_i, y_j)\in B} (r_{ij} - \mathbf{1}_{y_i=y_j})^2$
+1. 两个样本间的相似系数不是由特征空间的L1距离决定的，而是由一个CNN分类器$$g_\phi$$预测的。两个样本$$\mathbf{x}_i$$和$$\mathbf{x}_j$$间的相似系数为$$r_{ij} = g_\phi([\mathbf{x}_i, \mathbf{x}_j])$$，其中$$[.,.]$$代表着concatenation。
+2. 目标优化函数是MSE损失，而不是cross-entropy，因为RN在预测时更倾向于把相似系数预测过程作为一个regression问题，而不是二分类问题，$$\mathcal{L}(B) = \sum_{(\mathbf{x}_i, \mathbf{x}_j, y_i, y_j)\in B} (r_{ij} - \mathbf{1}_{y_i=y_j})^2$$
 
 
 ![relation-network]({{ '/assets/images/relation-network.png' | relative_url }})

@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    
+      
+
+
+
+
+
+
+    
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Predict Stock Prices Using RNN: Part 2</title>
+    <meta name="description" content="This post is a continued tutorial for how to build a recurrent neural network using Tensorflow to predict stock market prices. Part 2 attempts to predict pri...">
+
+    <link rel="shortcut icon" href="/assets/images/favicon.ico">
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="canonical" href="http://localhost:4000/2017/07/21/predict-stock-prices-using-RNN-part-2.html">
+
+    <!-- For Latex -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+
+    <!-- Google Analytics -->
+    <script>
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-8161570-6', 'auto');
+        ga('send', 'pageview');
+    </script>
+
+    <!-- For Facebook share button -->
+    <div id="fb-root"></div>
+    <script>
+      (function(d, s, id) {
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) return;
+        js = d.createElement(s); js.id = id;
+        js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.9";
+        fjs.parentNode.insertBefore(js, fjs);
+      }(document, 'script', 'facebook-jssdk'));
+    </script>
+
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+    <div class="wrapper">
+        
+        <a class="site-title" href="/">Tianhao</a>
+
+        <nav class="site-nav">
+            <a class="page-link" href="http://Wei-Tianhao.github.io" target="_blank">&#x1f349; About</a>
+        </nav>
+
+        <nav class="site-nav">
+            <a class="page-link" href="/contact.html">&#x1f4ee; Contact</a>
+        </nav>
+
+    </div>
+
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Predict Stock Prices Using RNN: Part 2</h1>
+    <p class="post-meta">
+
+      <time datetime="2017-07-21T20:00:00-04:00" itemprop="datePublished">
+        
+        Jul 21, 2017
+      </time>
+
+      <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+        by <span itemprop="name">Lilian Weng</span>
+      </span>
+
+      <span>
+        
+          
+          <a class="post-tag" href="/tag/rnn"><nobr>rnn</nobr>&nbsp;</a>
+        
+          
+          <a class="post-tag" href="/tag/tensorflow"><nobr>tensorflow</nobr>&nbsp;</a>
+        
+      </span>
+      <!--
+      <span class="share-buttons">
+        <span class="share-button"><a class="twitter-share-button" href="https://twitter.com/share" data-show-count="false">Tweet</a><script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script></span>
+
+        <span class="share-button"><span class="fb-like" data-href="/2017/07/21/predict-stock-prices-using-RNN-part-2.html" data-layout="button_count" data-action="like" data-size="small" data-show-faces="false" data-share="true"></span></span>
+      </span>
+      <div style="clear: both;"/>
+      -->
+
+    </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <blockquote>
+  <p>This post is a continued tutorial for how to build a recurrent neural network using Tensorflow to predict stock market prices. Part 2 attempts to predict prices of multiple stocks using embeddings. The full working code is available in <a href="https://github.com/lilianweng/stock-rnn">github.com/lilianweng/stock-rnn</a>.</p>
+</blockquote>
+
+<!--more-->
+
+<p>In the Part 2 tutorial, I would like to continue the topic on stock price prediction and to endow the recurrent neural network that I have built in <a href="//2017/07/08/predict-stock-prices-using-RNN-part-1.html">Part 1</a> with the capability of responding to multiple stocks. In order to distinguish the patterns associated with different price sequences, I use the stock symbol embedding vectors as part of the input.</p>
+
+<ul class="table-of-content" id="markdown-toc">
+  <li><a href="#dataset" id="markdown-toc-dataset">Dataset</a></li>
+  <li><a href="#model-construction" id="markdown-toc-model-construction">Model Construction</a>    <ul>
+      <li><a href="#define-the-graph" id="markdown-toc-define-the-graph">Define the Graph</a></li>
+      <li><a href="#training-session" id="markdown-toc-training-session">Training Session</a></li>
+      <li><a href="#visualize-the-graph" id="markdown-toc-visualize-the-graph">Visualize the Graph</a></li>
+    </ul>
+  </li>
+  <li><a href="#results" id="markdown-toc-results">Results</a>    <ul>
+      <li><a href="#price-prediction" id="markdown-toc-price-prediction">Price Prediction</a></li>
+      <li><a href="#embedding-visualization" id="markdown-toc-embedding-visualization">Embedding Visualization</a></li>
+      <li><a href="#known-problems" id="markdown-toc-known-problems">Known Problems</a></li>
+    </ul>
+  </li>
+</ul>
+
+<hr />
+
+<h2 id="dataset">Dataset</h2>
+
+<p>During the search, I found <a href="https://github.com/lukaszbanasiak/yahoo-finance">this library</a> for querying Yahoo! Finance API. It would be very useful if Yahoo hasn’t shut down the historical data fetch API. You may find it useful for querying other information though. Here I pick the Google Finance link, among <a href="https://www.quantshare.com/sa-43-10-ways-to-download-historical-stock-quotes-data-for-free">a couple of free data sources</a> for downloading historical stock prices.</p>
+
+<p>The data fetch code can be written as simple as:</p>
+
+<figure class="highlight"><pre><code class="language-python" data-lang="python"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+</pre></td><td class="code"><pre><span class="kn">import</span> <span class="nn">urllib2</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="n">BASE_URL</span> <span class="o">=</span> <span class="s">"https://www.google.com/finance/historical?"</span>
+           <span class="s">"output=csv&amp;q={0}&amp;startdate=Jan+1</span><span class="si">%2</span><span class="s">C+1980&amp;enddate={1}"</span>
+<span class="n">symbol_url</span> <span class="o">=</span> <span class="n">BASE_URL</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+    <span class="n">urllib2</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="s">'GOOG'</span><span class="p">),</span> <span class="c"># Replace with any stock you are interested.</span>
+    <span class="n">urllib2</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s">"</span><span class="si">%</span><span class="s">b+</span><span class="si">%</span><span class="s">d,+</span><span class="si">%</span><span class="s">Y"</span><span class="p">),</span> <span class="s">'+'</span><span class="p">)</span>
+<span class="p">)</span></pre></td></tr></tbody></table></code></pre></figure>
+
+<p>When fetching the content, remember to add try-catch wrapper in case the link fails or the provided stock symbol is not valid.</p>
+
+<figure class="highlight"><pre><code class="language-python" data-lang="python"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+</pre></td><td class="code"><pre><span class="k">try</span><span class="p">:</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">urllib2</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">symbol_url</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s">"GOOG.csv"</span><span class="p">,</span> <span class="s">'w'</span><span class="p">)</span> <span class="k">as</span> <span class="n">fin</span><span class="p">:</span>
+        <span class="k">print</span> <span class="o">&gt;&gt;</span> <span class="n">fin</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+<span class="k">except</span> <span class="n">urllib2</span><span class="o">.</span><span class="n">HTTPError</span><span class="p">:</span>
+    <span class="k">print</span> <span class="s">"Fetching Failed: {}"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">symbol_url</span><span class="p">)</span></pre></td></tr></tbody></table></code></pre></figure>
+
+<p>The full working data fetcher code is available <a href="https://github.com/lilianweng/stock-rnn/blob/master/data_fetcher.py">here</a>.</p>
+
+<h2 id="model-construction">Model Construction</h2>
+
+<p>The model is expected to learn the price sequences of different stocks in time. Due to the different underlying patterns, I would like to tell the model which stock it is dealing with explicitly. <a href="https://en.wikipedia.org/wiki/Embedding">Embedding</a> is more favored than one-hot encoding, because:</p>
+<ol>
+  <li>Given that the train set includes <script type="math/tex">N</script> stocks, the one-hot encoding would introduce <script type="math/tex">N</script> (or <script type="math/tex">N-1</script>) additional sparse feature dimensions. Once each stock symbol is mapped onto a much smaller embedding vector of length <script type="math/tex">k</script>, <script type="math/tex">k \ll N</script>, we end up with a much more compressed representation and smaller dataset to take care of.</li>
+  <li>Since embedding vectors are variables to learn. Similar stocks could be associated with similar embeddings and help the prediction of each others, such as “GOOG” and “GOOGL” which you will see in Fig. 5. later.</li>
+</ol>
+
+<p>In the recurrent neural network, at one time step <script type="math/tex">t</script>, the input vector contains <code class="highlighter-rouge">input_size</code> (labelled as <script type="math/tex">w</script>) daily price values of <script type="math/tex">i</script>-th stock, <script type="math/tex">(p_{i, tw}, p_{i, tw+1}, \dots, p_{i, (t+1)w-1})</script>. The stock symbol is uniquely mapped to a vector of length <code class="highlighter-rouge">embedding_size</code> (labelled as <script type="math/tex">k</script>), <script type="math/tex">(e_{i,0}, e_{i,1}, \dots, e_{i,k})</script>. As illustrated in Fig. 1., the price vector is concatenated with the embedding vector and then fed into the LSTM cell.</p>
+
+<p>Another alternative is to concatenate the embedding vectors with the last state of the LSTM cell and learn new weights <script type="math/tex">W</script> and bias <script type="math/tex">b</script> in the output layer. However, in this way, the LSTM cell cannot tell apart prices of one stock from another and its power would be largely restrained. Thus I decided to go with the former approach.</p>
+
+<p style="width: 560px;" class="center"><img src="/assets/images/rnn_with_embedding.png" alt="RNN with embedding" /></p>
+<p><em>Fig. 1. The architecture of the stock price prediction RNN model with stock symbol embeddings.</em></p>
+
+<p>Two new configuration settings are added into <code class="highlighter-rouge">RNNConfig</code>:</p>
+<ul>
+  <li><code class="highlighter-rouge">embedding_size</code> controls the size of each embedding vector;</li>
+  <li><code class="highlighter-rouge">stock_count</code> refers to the number of unique stocks in the dataset.</li>
+</ul>
+
+<p>Together they define the size of the embedding matrix, for which the model has to learn <code class="highlighter-rouge">embedding_size</code> <script type="math/tex">\times</script> <code class="highlighter-rouge">stock_count</code> additional variables compared to the model in <a href="//2017/07/08/predict-stock-prices-using-RNN-part-1.html">Part 1</a>.</p>
+
+<figure class="highlight"><pre><code class="language-python" data-lang="python"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+</pre></td><td class="code"><pre><span class="k">class</span> <span class="nc">RNNConfig</span><span class="p">():</span>
+   <span class="c"># ... old ones</span>
+   <span class="n">embedding_size</span> <span class="o">=</span> <span class="mi">3</span>
+   <span class="n">stock_count</span> <span class="o">=</span> <span class="mi">50</span></pre></td></tr></tbody></table></code></pre></figure>
+
+<h3 id="define-the-graph">Define the Graph</h3>
+
+<p><strong>— Let’s start going through some code —</strong></p>
+
+<p>(1) As demonstrated in tutorial <a href="//2017/07/08/predict-stock-prices-using-RNN-part-1.html#define-graph">Part 1: Define the Graph</a>, let us define a <code class="highlighter-rouge">tf.Graph()</code> named <code class="highlighter-rouge">lstm_graph</code> and a set of tensors to hold input data, <code class="highlighter-rouge">inputs</code>, <code class="highlighter-rouge">targets</code>, and <code class="highlighter-rouge">learning_rate</code> in the same way. One more placeholder to define is a list of stock symbols associated with the input prices. Stock symbols have been mapped to unique integers beforehand with <a href="http://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.LabelEncoder.html">label encoding</a>.</p>
+
+<figure class="highlight"><pre><code class="language-python" data-lang="python"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+</pre></td><td class="code"><pre><span class="c"># Mapped to an integer. one label refers to one stock symbol.</span>
+<span class="n">stock_labels</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">,</span> <span class="p">[</span><span class="bp">None</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span></pre></td></tr></tbody></table></code></pre></figure>
+
+<p>(2) Then we need to set up an embedding matrix to play as a lookup table, containing the embedding vectors of all the stocks. The matrix is initialized with random numbers in the interval [-1, 1] and gets updated during training.</p>
+
+<figure class="highlight"><pre><code class="language-python" data-lang="python"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+</pre></td><td class="code"><pre><span class="c"># NOTE: config = RNNConfig() and it defines hyperparameters.</span>
+<span class="c"># Convert the integer labels to numeric embedding vectors.</span>
+<span class="n">embedding_matrix</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span>
+    <span class="n">tf</span><span class="o">.</span><span class="n">random_uniform</span><span class="p">([</span><span class="n">config</span><span class="o">.</span><span class="n">stock_count</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">embedding_size</span><span class="p">],</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+<span class="p">)</span></pre></td></tr></tbody></table></code></pre></figure>
+
+<p>(3) Repeat the stock labels <code class="highlighter-rouge">num_steps</code> times to match the unfolded version of RNN and the shape of <code class="highlighter-rouge">inputs</code> tensor during training.
+The transformation operation <a href="https://www.tensorflow.org/api_docs/python/tf/tile">tf.tile</a> receives a base tensor and creates a new tensor by replicating its certain dimensions multiples times; precisely the <script type="math/tex">i</script>-th dimension of the input tensor gets multiplied by <code class="highlighter-rouge">multiples[i]</code> times. For example, if the <code class="highlighter-rouge">stock_labels</code> is <code class="highlighter-rouge">[[0], [0], [2], [1]]</code>
+tiling it by <code class="highlighter-rouge">[1, 5]</code> produces <code class="highlighter-rouge">[[0 0 0 0 0], [0 0 0 0 0], [2 2 2 2 2], [1 1 1 1 1]]</code>.</p>
+
+<figure class="highlight"><pre><code class="language-python" data-lang="python"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+</pre></td><td class="code"><pre><span class="n">stacked_stock_labels</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">stock_labels</span><span class="p">,</span> <span class="n">multiples</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">num_steps</span><span class="p">])</span></pre></td></tr></tbody></table></code></pre></figure>
+
+<p>(4) Then we map the symbols to embedding vectors according to the lookup table <code class="highlighter-rouge">embedding_matrix</code>.</p>
+
+<figure class="highlight"><pre><code class="language-python" data-lang="python"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+</pre></td><td class="code"><pre><span class="c"># stock_label_embeds.get_shape() = (?, num_steps, embedding_size).</span>
+<span class="n">stock_label_embeds</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">embedding_lookup</span><span class="p">(</span><span class="n">embedding_matrix</span><span class="p">,</span> <span class="n">stacked_stock_labels</span><span class="p">)</span></pre></td></tr></tbody></table></code></pre></figure>
+
+<p>(5) Finally, combine the price values with the embedding vectors. The operation <a href="https://www.tensorflow.org/api_docs/python/tf/concat">tf.concat</a> concatenates a list of tensors along the dimension <code class="highlighter-rouge">axis</code>. In our case, we want to keep the batch size and the number of steps unchanged, but only extend the input vector of length <code class="highlighter-rouge">input_size</code> to include embedding features.</p>
+
+<figure class="highlight"><pre><code class="language-python" data-lang="python"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+</pre></td><td class="code"><pre><span class="c"># inputs.get_shape() = (?, num_steps, input_size)</span>
+<span class="c"># stock_label_embeds.get_shape() = (?, num_steps, embedding_size)</span>
+<span class="c"># inputs_with_embeds.get_shape() = (?, num_steps, input_size + embedding_size)</span>
+<span class="n">inputs_with_embeds</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">inputs</span><span class="p">,</span> <span class="n">stock_label_embeds</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span></pre></td></tr></tbody></table></code></pre></figure>
+
+<p>The rest of code runs the dynamic RNN, extracts the last state of the LSTM cell, and handles weights and bias in the output layer. See <a href="//2017/07/08/predict-stock-prices-using-RNN-part-1.html#define-graph">Part 1: Define the Graph</a> for the details.</p>
+
+<h3 id="training-session">Training Session</h3>
+
+<p>Please read <a href="//2017/07/08/predict-stock-prices-using-RNN-part-1.html#start-training-session">Part 1: Start Training Session</a> if you haven’t for how to run a training session in Tensorflow.</p>
+
+<p>Before feeding the data into the graph, the stock symbols should be transformed to unique integers with <a href="http://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.LabelEncoder.html">label encoding</a>.</p>
+
+<figure class="highlight"><pre><code class="language-python" data-lang="python"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+</pre></td><td class="code"><pre><span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="kn">import</span> <span class="n">LabelEncoder</span>
+<span class="n">label_encoder</span> <span class="o">=</span> <span class="n">LabelEncoder</span><span class="p">()</span>
+<span class="n">label_encoder</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">list_of_symbols</span><span class="p">)</span></pre></td></tr></tbody></table></code></pre></figure>
+
+<p>The train/test split ratio remains same, 90% for training and 10% for testing, for every individual stock.</p>
+
+<h3 id="visualize-the-graph">Visualize the Graph</h3>
+
+<p>After the graph is defined in code, let us check the visualization in Tensorboard to make sure that components are constructed correctly. Essentially it looks very much like our architecture illustration in Fig. 1.</p>
+
+<p style="width: 560px;" class="center"><img src="/assets/images/rnn_with_embedding_tensorboard.png" alt="Visualization of RNN with embedding" /></p>
+<p><em>Fig. 2. Tensorboard visualization of the graph defined above. Two modules, “train” and “save”, have been removed from the main graph.</em></p>
+
+<p>Other than presenting the graph structure or tracking the variables in time, Tensorboard also supports <a href="https://www.tensorflow.org/get_started/embedding_viz"><strong>embeddings visualization</strong></a>. In order to communicate the embedding values to Tensorboard, we need to add proper tracking in the training logs.</p>
+
+<p>(0) In my embedding visualization, I want to color each stock with its industry sector. This metadata should stored in a csv file. The file has two columns, the stock symbol and the industry sector. It does not matter whether the csv file has header, but the order of the listed stocks must be consistent with <code class="highlighter-rouge">label_encoder.classes_</code>.</p>
+
+<figure class="highlight"><pre><code class="language-python" data-lang="python"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+</pre></td><td class="code"><pre><span class="kn">import</span> <span class="nn">csv</span>
+<span class="n">embedding_metadata_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">your_log_file_folder</span><span class="p">,</span> <span class="s">'metadata.csv'</span><span class="p">)</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">embedding_metadata_path</span><span class="p">,</span> <span class="s">'w'</span><span class="p">)</span> <span class="k">as</span> <span class="n">fout</span><span class="p">:</span>
+    <span class="n">csv_writer</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">writer</span><span class="p">(</span><span class="n">fout</span><span class="p">)</span>
+    <span class="c"># write the content into the csv file.</span>
+    <span class="c"># for example, csv_writer.writerows(["GOOG", "information_technology"])</span></pre></td></tr></tbody></table></code></pre></figure>
+
+<p>(1) Set up the summary writer first within the training <code class="highlighter-rouge">tf.Session</code>.</p>
+
+<figure class="highlight"><pre><code class="language-python" data-lang="python"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+</pre></td><td class="code"><pre><span class="kn">from</span> <span class="nn">tensorflow.contrib.tensorboard.plugins</span> <span class="kn">import</span> <span class="n">projector</span>
+<span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">Session</span><span class="p">(</span><span class="n">graph</span><span class="o">=</span><span class="n">lstm_graph</span><span class="p">)</span> <span class="k">as</span> <span class="n">sess</span><span class="p">:</span>
+    <span class="n">summary_writer</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">FileWriter</span><span class="p">(</span><span class="n">your_log_file_folder</span><span class="p">)</span>
+    <span class="n">summary_writer</span><span class="o">.</span><span class="n">add_graph</span><span class="p">(</span><span class="n">sess</span><span class="o">.</span><span class="n">graph</span><span class="p">)</span></pre></td></tr></tbody></table></code></pre></figure>
+
+<p>(2) Add the tensor <code class="highlighter-rouge">embedding_matrix</code> defined in our graph <code class="highlighter-rouge">lstm_graph</code> into the projector config variable and attach the metadata csv file.</p>
+
+<figure class="highlight"><pre><code class="language-python" data-lang="python"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+</pre></td><td class="code"><pre>    <span class="n">projector_config</span> <span class="o">=</span> <span class="n">projector</span><span class="o">.</span><span class="n">ProjectorConfig</span><span class="p">()</span>
+    <span class="c"># You can add multiple embeddings. Here we add only one.</span>
+    <span class="n">added_embedding</span> <span class="o">=</span> <span class="n">projector_config</span><span class="o">.</span><span class="n">embeddings</span><span class="o">.</span><span class="n">add</span><span class="p">()</span>
+    <span class="n">added_embedding</span><span class="o">.</span><span class="n">tensor_name</span> <span class="o">=</span> <span class="n">embedding_matrix</span><span class="o">.</span><span class="n">name</span>
+    <span class="c"># Link this tensor to its metadata file.</span>
+    <span class="n">added_embedding</span><span class="o">.</span><span class="n">metadata_path</span> <span class="o">=</span> <span class="n">embedding_metadata_path</span></pre></td></tr></tbody></table></code></pre></figure>
+
+<p>(3) This line creates a file <code class="highlighter-rouge">projector_config.pbtxt</code> in the folder <code class="highlighter-rouge">your_log_file_folder</code>. TensorBoard will read this file during startup.</p>
+
+<figure class="highlight"><pre><code class="language-python" data-lang="python"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+</pre></td><td class="code"><pre>    <span class="n">projector</span><span class="o">.</span><span class="n">visualize_embeddings</span><span class="p">(</span><span class="n">summary_writer</span><span class="p">,</span> <span class="n">projector_config</span><span class="p">)</span></pre></td></tr></tbody></table></code></pre></figure>
+
+<h2 id="results">Results</h2>
+
+<p>The model is trained with top 50 stocks with largest market values in the S&amp;P 500 index.</p>
+
+<p>(Run the following command within <a href="https://github.com/lilianweng/stock-rnn">github.com/lilianweng/stock-rnn</a>)</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>python main.py <span class="nt">--stock_count</span><span class="o">=</span>50 <span class="nt">--embed_size</span><span class="o">=</span>3 <span class="nt">--input_size</span><span class="o">=</span>3 <span class="nt">--max_epoch</span><span class="o">=</span>50 <span class="nt">--train</span>
+</code></pre></div></div>
+
+<p>And the following configuration is used:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>stock_count = 100
+input_size = 3
+embed_size = 3
+num_steps = 30
+lstm_size = 256
+num_layers = 1
+max_epoch = 50
+keep_prob = 0.8
+batch_size = 64
+init_learning_rate = 0.05
+learning_rate_decay = 0.99
+init_epoch = 5
+</code></pre></div></div>
+
+<h3 id="price-prediction">Price Prediction</h3>
+
+<p>As a brief overview of the prediction quality, Fig. 3 plots the predictions for test data of “KO”, “AAPL”, “GOOG” and “NFLX”. The overall trends matched up between the true values and the predictions. Considering how the prediction task is designed, the model relies on all the historical data points to predict only next 5 (<code class="highlighter-rouge">input_size</code>) days. With a small <code class="highlighter-rouge">input_size</code>, the model does not need to worry about the long-term growth curve. Once we increase <code class="highlighter-rouge">input_size</code>, the prediction would be much harder.</p>
+
+<p><img src="/assets/images/rnn_embedding_AAPL.png" alt="Results AAPL" />
+<img src="/assets/images/rnn_embedding_MSFT.png" alt="Results MSFT" />
+<img src="/assets/images/rnn_embedding_GOOG.png" alt="Results GOOG" />
+<em>Fig. 3. True and predicted stock prices of AAPL, MSFT and GOOG in the test set. The prices are normalized across consecutive prediction sliding windows (See <a href="//2017/07/08/predict-stock-prices-using-RNN-part-1.html#normalization">Part 1: Normalization</a>). The y-axis values get multiplied by 5 for a better comparison between true and predicted trends.</em></p>
+
+<h3 id="embedding-visualization">Embedding Visualization</h3>
+
+<p>One common technique to visualize the clusters in embedding space is <a href="https://en.wikipedia.org/wiki/T-distributed_stochastic_neighbor_embedding">t-SNE</a> (<a href="http://www.jmlr.org/papers/volume9/vandermaaten08a/vandermaaten08a.pdf">Maaten and Hinton, 2008</a>), which is well supported in Tensorboard. t-SNE, short for “t-Distributed Stochastic Neighbor Embedding, is a variation of Stochastic Neighbor Embedding (<a href="http://www.cs.toronto.edu/~fritz/absps/sne.pdf">Hinton and Roweis, 2002</a>), but with a modified cost function that is easier to optimize.</p>
+
+<ol>
+  <li>Similar to SNE, t-SNE first converts the high-dimensional Euclidean distances between data points into conditional probabilities that represent similarities.</li>
+  <li>t-SNE defines a similar probability distribution over the data points in the low-dimensional space, and it minimizes the <a href="https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence">Kullback–Leibler divergence</a> between the two distributions with respect to the locations of the points on the map.</li>
+</ol>
+
+<p>Check <a href="http://distill.pub/2016/misread-tsne/">this post</a> for how to adjust the parameters, Perplexity and learning rate (epsilon), in t-SNE visualization.</p>
+
+<p style="width: 80%;" class="center"><img src="/assets/images/embedding_clusters.png" alt="Visualization of embeddings" /></p>
+<p><em>Fig. 4. Visualization of the stock embeddings using t-SNE. Each label is colored based on the stock industry sector. We have 5 clusters. Interstingly, GOOG, GOOGL and FB belong to the same cluster, while AMZN and AAPL stay in another.</em></p>
+
+<p>In the embedding space, we can measure the similarity between two stocks by examining the similarity between their embedding vectors. For example, GOOG is mostly similar to GOOGL in the learned embeddings (See Fig. 5).</p>
+
+<p style="width: 100%;" class="center"><img src="/assets/images/embedding_clusters_2.png" alt="Visualization of embeddings: GOOG" /></p>
+<p><em>Fig. 5. “GOOG” is clicked in the embedding visualization graph and top 20 similar neighbors are highlighted with colors from dark to light as the similarity decreases.</em></p>
+
+<h3 id="known-problems">Known Problems</h3>
+
+<ul>
+  <li>The prediction values get diminished and flatten quite a lot as the training goes. That’s why I multiplied the absolute values by a constant to make the trend is more visible in Fig. 3., as I’m more curious about whether the prediction on the up-or-down direction right. However, there must be a reason for the diminishing prediction value problem. Potentially rather than using simple MSE as the loss, we can adopt another form of loss function to penalize more when the direction is predicted wrong.</li>
+  <li>The loss function decreases fast at the beginning, but it suffers from occasional value explosion (a sudden peak happens and then goes back immediately). I suspect it is related to the form of loss function too. A updated and smarter loss function might be able to resolve the issue.</li>
+</ul>
+
+<p><br />
+The full code in this tutorial is available in <a href="https://github.com/lilianweng/stock-rnn">github.com/lilianweng/stock-rnn</a>.</p>
+
+<hr />
+
+<p><em>If you notice mistakes and errors in this post, don’t hesitate to contact me at [lilian dot wengweng at gmail dot com] and I would be super happy to correct them right away!</em></p>
+
+<p>Thanks! :)</p>
+
+
+  </div>
+
+
+  <div class="page-navigation">
+    
+      <a class="prev" href="/2017/07/08/predict-stock-prices-using-RNN-part-1.html">&larr; Predict Stock Prices Using RNN: Part 1</a>
+    
+
+    
+      <a class="next" href="/%E7%9E%8E%E6%89%AF/2019/07/20/%E7%9E%8E%E6%89%AF.html">瞎扯 &rarr;</a>
+    
+  </div>
+
+  
+
+</article>
+
+      </div>
+    </main>
+
+    <div style="clear: both;"/>
+<footer class="site-footer">
+    2018 &copy; Built by <a href="https://jekyllrb.com/" target="_blank">Jekyll</a> and <a href="https://github.com/jekyll/minima/" target="_blank">minima</a> | View <a href="https://github.com/Wei-TianHao/Wei-TianHao.github.io" target="_blank">this</a> on Github
+
+    <p>
+        <a href="//feed.xml" target="_blank">
+            <img src="/assets/images/logo_rss.png" />
+        </a>
+        <!-- <a href="https://scholar.google.com/citations?user=dCa-pW8AAAAJ&hl=en&oi=ao" target="_blank">
+            <img src="/assets/images/logo_scholar.png" />
+        </a> -->
+        <a href="https://github.com/Wei-TianHao" target="_blank">
+            <img src="/assets/images/logo_github.png" />
+        </a>
+        <!-- <a href="https://www.instagram.com/lilianweng/" target="_blank">
+            <img src="/assets/images/logo_instagram.png" />
+        </a> -->
+    </p>
+</footer>
+
+
+  </body>
+
+</html>
