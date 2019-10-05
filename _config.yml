@@ -1,15 +1,18 @@
 title: Tianhao
+name: "Tianhao's Blog"
 author: Tianhao Wei
-baseurl: "/"
-description: 随便写写，都是骗人的
-profile_url: "http://Wei-Tianhao.github.io"
+twitter_username: wei_tianhao
+baseurl: "/blog"
+description: Document my learning notes.
+profile_url: "https://wei-tianhao.github.io"
 
 # Build settings
 markdown: kramdown
 highlighter: rouge
 excerpt_separator: <!--more-->
-gems:
+plugins:
   - jekyll-feed
+  - jekyll-archives
 exclude:
   - Gemfile
   - Gemfile.lock

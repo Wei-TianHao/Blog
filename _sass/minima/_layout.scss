@@ -1,19 +1,29 @@
 /**
  * Site header
  */
-.site-header {
-  border-top: 5px solid $theme-color;
-  border-bottom: 1px solid $theme-color-very-light;
-  min-height: $spacing-unit * 1.865;
 
-  // Positioning context for the mobile navigation icon
+.site-header {
+  background: #222;
+  opacity: 0.8;
+  min-height: $spacing-unit * 1.865;
   position: relative;
+
+  /*
+  min-height: $spacing-unit * 1.75;
+  background: #222;
+  opacity: 0.8;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  display: block;
+  transition: top 0.3s;
+  */
 }
 
 .site-title {
   @include relative-font-size(1.625);
   font-weight: 600;
-  color: $theme-color;
+  color: #ffffff; // $crimson-color;
   line-height: $base-line-height * $base-font-size * 2.25;
   letter-spacing: -1px;
   margin-bottom: 0;
@@ -21,11 +31,11 @@
 
   &,
   &:visited {
-    color: $theme-color-dark;
+    color: #ffffff; // $crimson-color-dark;
   }
 
   &:hover {
-    color: $theme-color-light;
+    color: $crimson-color-light;
     text-decoration: none;
     cursor: pointer;
   }
@@ -46,7 +56,7 @@
   }
 
   .page-link {
-    color: $text-color;
+    color: #ffffff; // $text-color;
     line-height: $base-line-height;
 
     // Gaps between nav items, but not on the last one
@@ -55,7 +65,7 @@
     }
 
     &:hover {
-      color: $theme-color;
+      color: $crimson-color-light;
       text-decoration: none;
       cursor: pointer;
     }
@@ -136,7 +146,7 @@
   }
   p {
     margin: 5px auto;
-    width: 160px;
+    width: 200px;
   }
   img {
     width: 26px;
@@ -156,7 +166,8 @@
 }
 
 .page-heading {
-  @include relative-font-size(1.25);
+  @include relative-font-size(1.5);
+  font-weight: 600;
 }
 
 .post-list {
@@ -164,7 +175,7 @@
   list-style: none;
 
   > li {
-    margin-bottom: $spacing-unit;
+    margin-bottom: $spacing-unit * 2;
   }
 }
 
@@ -173,7 +184,7 @@
   color: $grey-color;
 
   a.post-tag {
-    border-radius: 20px;
+    border-radius: 5px;
     border: 1px solid $grey-color;
     color: $grey-color;
     padding: 1px 5px;
@@ -181,28 +192,50 @@
     &:hover {
       border: 1px solid $brand-color;
       text-decoration: none;
-      color: $brand-color;
+      color: #ffffff;
+      background: $brand-color;
     }
   }
 }
 
 .post-link {
   display: block;
-  @include relative-font-size(1.5);
+  @include relative-font-size(1.6);
+  font-weight: 600;
+
+  font-color: #000000;
 
   &:hover {
-    color: $theme-color-light;
+    color: $crimson-color-light;
     text-decoration: none;
     cursor: pointer;
   }
 }
 
+/**
+ * FAQ
+ */
 
+.other-pages {
+    margin-top: $spacing-unit * 0.5;
+}
+
+div.qa {
+    margin: 10px;
+    padding: 10px;
+    .question {
+        border-radius: 5px;
+        background: #eeeeee;
+        padding: 5px;
+        padding-left: 20px;
+    }
+ }
 
 /**
  * Posts
  */
 .post-header {
+  margin-top: $spacing-unit * 2;
   margin-bottom: $spacing-unit;
 }
 
@@ -224,7 +257,7 @@
   margin-bottom: $spacing-unit;
 
   h2 {
-    @include relative-font-size(1.7);
+    @include relative-font-size(1.8);
 
     @include media-query($on-laptop) {
       @include relative-font-size(1.75);
@@ -232,6 +265,10 @@
 
     font-weight: $base-font-weight * 1.5;
     margin-top: $spacing-unit * 1.55;
+
+    blockquote: {
+        line-height: 1.5;
+    }
   }
 
   h3 {
@@ -258,8 +295,8 @@
     padding-bottom: 1px;
 
     &:hover {
-      color: $theme-color-light;
-      border-bottom: 1px solid $theme-color-light;
+      color: $crimson-color-light;
+      border-bottom: 1px solid $crimson-color-light;
       padding-bottom: 1px;
       text-decoration: none;
     }

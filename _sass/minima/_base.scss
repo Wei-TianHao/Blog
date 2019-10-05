@@ -13,7 +13,7 @@ hr {
     display: block;
     height: 1px;
     border: 0;
-    border-top: 1px solid $theme-color-very-light;
+    border-top: 1px solid $crimson-color-very-light;
     margin: 2em 0;
     padding: 0; 
 }
@@ -182,7 +182,7 @@ a {
   }
 
   &:hover {
-    color: $theme-color-light;
+    color: $crimson-color-light;
     text-decoration: underline;
   }
 
@@ -200,12 +200,14 @@ a {
  * Blockquotes
  */
 blockquote {
-  color: $grey-color;
-  border-left: 4px solid $grey-color-light;
-  padding-left: $spacing-unit / 2;
+  color: #777777;
+  border-left: 4px solid #bbbbbb;
+  padding: 10px;
+  margin: 10px;
+  padding-left: 25px;
   @include relative-font-size(1.125);
   letter-spacing: -1px;
-  font-style: italic;
+  background: #f0f0f0;
 
   > :last-child {
     margin-bottom: 0;
