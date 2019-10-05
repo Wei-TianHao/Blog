@@ -1,2 +1,1 @@
-# Lil'Log
-Lilian's Blog
+# My Blog
