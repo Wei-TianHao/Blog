@@ -1,12 +1,12 @@
 ---
 layout: post
-comments: false
+comments: true
 title: "Predict Stock Prices Using RNN: Part 1"
 date: 2017-07-08 09:18:00
-tags: rnn tensorflow
+tags: tutorial rnn tensorflow
 ---
 
-> This post is a tutorial for how to build a recurrent neural network using Tensorflow to predict stock market prices. Part 1 focuses on the prediction of S&P 500 index. The full working code is available in [github.com/lilianweng/stock-rnn](https://github.com/lilianweng/stock-rnn).
+> This post is a tutorial for how to build a recurrent neural network using Tensorflow to predict stock market prices. Part 1 focuses on the prediction of S&P 500 index. The full working code is available in [lilianweng/stock-rnn](https://github.com/lilianweng/stock-rnn).
 
 
 <!--more-->
@@ -130,7 +130,7 @@ Since we always want to predict the future, we take the **latest 10%** of data a
 The S&P 500 index increases in time, bringing about the problem that most values in the test set are out of the scale of the train set and thus the model has to _predict some numbers it has never seen before_. Sadly and unsurprisingly, it does a tragic job. See Fig. 3.
 
 
-![Sad example]({{ '../assets/images/a_sad_example_stock_prediction.png' | relative_url }})
+![Sad example]({{ '/assets/images/a_sad_example_stock_prediction.png' | relative_url }})
 {: style="width: 400px; max-width: 100%;"}
 Fig. 3 A very sad example when the RNN model have to predict numbers out of the scale of the training data.
 
