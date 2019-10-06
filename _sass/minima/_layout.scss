@@ -3,7 +3,7 @@
  */
 
 .site-header {
-  background: #222;
+  background: rgb(255, 255, 255);
   opacity: 0.8;
   min-height: $spacing-unit * 1.865;
   position: relative;
@@ -23,7 +23,7 @@
 .site-title {
   @include relative-font-size(1.625);
   font-weight: 600;
-  color: #ffffff; // $highlight-color;
+  color: #000000; // $highlight-color;
   line-height: $base-line-height * $base-font-size * 2.25;
   letter-spacing: -1px;
   margin-bottom: 0;
