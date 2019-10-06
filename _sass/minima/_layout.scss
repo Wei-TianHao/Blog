@@ -3,7 +3,7 @@
  */
 
 .site-header {
-  background: rgb(160, 160, 160);
+  background: rgb(219, 219, 219);
   opacity: 0.8;
   min-height: $spacing-unit * 1.865;
   position: relative;
@@ -31,7 +31,7 @@
 
   &,
   &:visited {
-    color: #494949; // $highlight-color-dark;
+    color: #000000; // $highlight-color-dark;
   }
 
   &:hover {
@@ -56,7 +56,7 @@
   }
 
   .page-link {
-    color: #ffffff; // $text-color;
+    color: #494949; // $text-color;
     line-height: $base-line-height;
 
     // Gaps between nav items, but not on the last one
