@@ -40,6 +40,7 @@ $$
 
 *少样本学习（Few-shot classification）* 是元学习的在监督学习中的一个实例。数据集$$\mathcal{D}$$经常被划分为两部分，一个用于学习的支持集（support set）$$S$$，和一个用于训练和测试的预测集（prediction set）$$B$$，即$$\mathcal{D}=\langle S, B\rangle$$。*K-shot N-class*分类任务，即支持集中有N类数据，每类数据有K个带有标注的样本。
 
+![few-shot-classification]({{ '/assets/images/2019-09-19-meta-learning/few-shot-classification.png' | relative_url }}) {: style="width: 100%;" class="center"} Fig. 1. An example of 4-shot 2-class image classification. (Image thumbnails are from Pinterest)
 
 ![few-shot-classification](../assets/images/2019-09-19-meta-learning/few-shot-classification.png)
 *Fig. 1. 4-shot 2-class 图像分类的例子。 (图像来自[Pinterest](https://www.pinterest.com/))*
