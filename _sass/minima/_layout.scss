@@ -23,7 +23,7 @@
 .site-title {
   @include relative-font-size(1.625);
   font-weight: 1000;
-  color: #000000; // $highlight-color;
+  color:$highlight-color;
   line-height: $base-line-height * $base-font-size * 2.25;
   letter-spacing: -1px;
   margin-bottom: 0;
