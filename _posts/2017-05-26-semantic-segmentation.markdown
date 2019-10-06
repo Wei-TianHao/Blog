@@ -7,7 +7,9 @@ categories: 论文
 
 ---
 
+> 没啥好说的。
 
+<!--more-->
 
 ## Image Caption为什么需要Semantic Segmentation
 
