@@ -18,7 +18,7 @@ layout: default
         </span>
 
         <h2>
-          <a class="post-link" href="{{ post.url | relative_url }}">{{ post.title | escape }}</a>
+          <a id="post-a" class="post-link"  href="{{ post.url | relative_url }}">{{ post.title | escape }}</a>
           {% if post.excerpt %}
             {{ post.excerpt }}
           {% endif %}

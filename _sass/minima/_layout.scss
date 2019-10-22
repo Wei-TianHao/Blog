@@ -203,7 +203,7 @@
   @include relative-font-size(1.6);
   font-weight: 600;
 
-  font-color: #000000;
+  font-color: $highlight-color;
 
   &:hover {
     color: $highlight-color-light;
@@ -211,6 +211,20 @@
     cursor: pointer;
   }
 }
+
+.post-link-dark {
+    display: block;
+    @include relative-font-size(1.6);
+    font-weight: 600;
+  
+    font-color: #000000;
+  
+    &:hover {
+      color: $highlight-color-light;
+      text-decoration: none;
+      cursor: pointer;
+    }
+  }
 
 /**
  * FAQ

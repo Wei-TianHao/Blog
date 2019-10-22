@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    
+      
+
+
+
+
+
+
+    
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- <meta name="viewport" content="width=device-width, initial-scale=1"> -->
+
+    <title>高斯过程回归科普</title>
+
+    <meta name="description" content="高斯过程最关键的思想就是，你不想要什么变量，就对这个变量做高斯分布假设…然后就可以计算关于这个变量的边缘分布，把这个变量消掉，建立起其他变量之间的直接联系。">
+
+    <meta content="TH的自言自语" property="og:site_name">
+    
+        <meta content="高斯过程回归科普" property="og:title">
+    
+    
+        <meta content="article" property="og:type">
+    
+    
+        <meta content="高斯过程最关键的思想就是，你不想要什么变量，就对这个变量做高斯分布假设…然后就可以计算关于这个变量的边缘分布，把这个变量消掉，建立起其他变量之间的直接联系。" property="og:description">
+    
+    
+        <meta content="http://localhost:4000/2019/09/23/gaussian-process.html" property="og:url">
+    
+    
+        <meta content="2019-09-23T22:00:00-04:00" property="article:published_time">
+        <meta content="http://localhost:4000/about/" property="article:author">
+    
+    
+    
+        
+        <meta content="bayesian-methods" property="article:tag">
+        
+        <meta content="machine-learning" property="article:tag">
+        
+    
+
+    <link rel="shortcut icon" href="/blog/assets/images/favicon.png">
+    <link rel="stylesheet" href="/blog/assets/css/main.css">
+    <link rel="canonical" href="http://localhost:4000/blog/2019/09/23/gaussian-process.html">
+
+    <!-- For Latex -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+
+    <!-- Google Analytics -->
+    <script>
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-8161570-6', 'auto');
+        ga('send', 'pageview');
+    </script>
+
+    <!-- For Facebook share button -->
+    <div id="fb-root"></div>
+    <script>
+      (function(d, s, id) {
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) return;
+        js = d.createElement(s); js.id = id;
+        js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.9";
+        fjs.parentNode.insertBefore(js, fjs);
+      }(document, 'script', 'facebook-jssdk'));
+    </script>
+
+    <!-- Twitter cards -->
+    <meta name="twitter:site"    content="@wei_tianhao">
+    <meta name="twitter:creator" content="@Tianhao Wei">
+    <meta name="twitter:title"   content="高斯过程回归科普">
+
+    
+        <meta name="twitter:description" content="<blockquote>
+  <p>高斯过程最关键的思想就是，你不想要什么变量，就对这个变量做高斯分布假设…然后就可以计算关于这个变量的边缘分布，把这个变量消掉，建立起其他变量之间的直接联系。</p>
+</blockquote>
+
+">
+    
+
+    
+        <meta name="twitter:card"  content="summary">
+        <meta name="twitter:image" content="">
+    
+    <!-- end of Twitter cards -->
+
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner" id='header-bar'>
+
+    <div class="wrapper">
+        
+        <a class="site-title" href="/blog/">TH的自言自语</a>
+
+        <!-- <nav class="site-nav">
+            <a class="page-link" href="https://wei-tianhao.github.io" target="_blank">&#x1f349; About</a>
+        </nav> -->
+        <!-- <nav class="site-nav">
+            <a class="page-link" href="/blog/contact.html">&#x1f917; Contact</a>
+        </nav>
+        <nav class="site-nav">
+            <a class="page-link" href="/blog/FAQ.html">&#x1F64B; FAQ</a>
+        </nav>
+        <nav class="site-nav">
+            <a class="page-link" href="/blog/archive.html">&#x1f516; Archive</a>
+        </nav> -->
+
+        <nav class="site-nav">
+            <a class="page-link" href="/blog/contact.html">&#x57;关于我</a>
+        </nav>
+        <nav class="site-nav">
+            <a class="page-link" href="/blog/FAQ.html">FAQ</a>
+        </nav>
+        <nav class="site-nav">
+            <a class="page-link" href="/blog/archive.html">归档</a>
+        </nav>
+
+    </div>
+
+</header>
+
+<script>
+var prevScrollpos = window.pageYOffset;
+window.onscroll = function() {
+var currentScrollPos = window.pageYOffset;
+  if (prevScrollpos > currentScrollPos) {
+    document.getElementById("header-bar").style.top = "0";
+  } else {
+    document.getElementById("header-bar").style.top = "-50px";
+  }
+  prevScrollpos = currentScrollPos;
+}
+</script>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">高斯过程回归科普</h1>
+    <p class="post-meta">
+
+      <time datetime="2019-09-23T22:00:00-04:00" itemprop="datePublished">
+        
+        Sep 23, 2019
+      </time>
+
+      <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+        by <span itemprop="name">Tianhao Wei</span>
+      </span>
+
+      <span>
+        
+          
+          <a class="post-tag" href="/blog/tag/bayesian-methods"><nobr>bayesian-methods</nobr>&nbsp;</a>
+        
+          
+          <a class="post-tag" href="/blog/tag/machine-learning"><nobr>machine-learning</nobr>&nbsp;</a>
+        
+      </span>
+      <!--
+      <span class="share-buttons">
+        <span class="share-button"><a class="twitter-share-button" href="https://twitter.com/share" data-show-count="false">Tweet</a><script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script></span>
+
+        <span class="share-button"><span class="fb-like" data-href="/2019/09/23/gaussian-process.html" data-layout="button_count" data-action="like" data-size="small" data-show-faces="false" data-share="true"></span></span>
+      </span>
+      <div style="clear: both;"/>
+      -->
+
+    </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <blockquote>
+  <p>高斯过程最关键的思想就是，你不想要什么变量，就对这个变量做高斯分布假设…然后就可以计算关于这个变量的边缘分布，把这个变量消掉，建立起其他变量之间的直接联系。</p>
+</blockquote>
+
+<!--more-->
+
+<h3 id="简介">简介</h3>
+
+<p>高斯过程回归是一类贝叶斯非参方法，解决的问题是给定一堆数据点<script type="math/tex">(x,y)</script>后，如何寻找拟合数据最好的函数，同时给出函数的分布，类似于置信区间。</p>
+
+<p>为了引入高斯过程回归，我们先讲一下参数方法，贝叶斯线性回归。</p>
+
+<h3 id="贝叶斯线性回归">贝叶斯线性回归</h3>
+
+<p>假设我们现在有一堆数据点<script type="math/tex">S=(x,y)</script>，数据的分布满足
+<script type="math/tex">y=f(x)+\epsilon,\ \epsilon \sim N(0,\sigma^2)</script>
+其中我们假设<script type="math/tex">f(x)=w^T x</script>，即线性模型，<script type="math/tex">\epsilon</script>是观测噪音。</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td>我们现在的目标是求一个最好的<script type="math/tex">w</script>使得<script type="math/tex">f</script>尽量好的拟合这些数据点。一个可行的想法是：如果我们知道给定<script type="math/tex">S</script>以后<script type="math/tex">w</script>的概率分布，那我们就能轻易选出最好的<script type="math/tex">w</script>了。即我们的目标是求<script type="math/tex">w</script>的后验概率分布$$p(w</td>
+      <td>S)$$。</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>但这个没法直接求，因为逻辑上来说<script type="math/tex">w</script>并不取决于你的数据集是什么。所以我们想能不能利用贝叶斯方法，用<script type="math/tex">p(w)</script>和$$p(S</td>
+      <td>w)$$来求？</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><script type="math/tex">p(w)</script>可以由我们指定，因为求后验概率的过程就是根据观察调整一个概率分布超参数的过程。我们用<script type="math/tex">p(w) \sim N(0,\tau^2 I)</script>，使用高斯分布的原因待会会解释，均值设为<script type="math/tex">0</script>是因为我们其实并不知道<script type="math/tex">w</script>的分布是怎样的，所以应该尽量少的引入先验知识，而<script type="math/tex">0</script>是最无偏的估计。</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td>而$$p(S</td>
+      <td>w)<script type="math/tex">其实就是</script>p(y</td>
+      <td>x,w)<script type="math/tex">，这两个是完全等价的，因为</script>(x,y)<script type="math/tex">是一起给定的，</script>p(y</td>
+      <td>x)=1$$</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>现在我们知道了<script type="math/tex">p(S|w)</script>和<script type="math/tex">p(w)</script>，用贝叶斯公式求<script type="math/tex">p(w|S)</script>
+<script type="math/tex">p(w|S) = \frac{p(S|w)\ p(w)}{p(S)}\\
+p(S)=\int p(w)\ p(S|w)\ dw</script></p>
+
+<p>这样我们就能选出最适用于当前数据<script type="math/tex">S</script>和模型<script type="math/tex">f</script>的参数<script type="math/tex">w</script>啦！假设我们的测试集是<script type="math/tex">(x^*,y^*)</script>，把<script type="math/tex">w</script>带进去就可以对<script type="math/tex">x^*</script>进行预测。</p>
+
+<p>但贝叶斯方法有个额外的好处，就是不光能给出预测，还能给出预测的分布，即
+<script type="math/tex">p(y^*|S,x^*) = \int p(y^*|x^*,w)\ p(w|S)\ dw</script></p>
+
+<table>
+  <tbody>
+    <tr>
+      <td>一般来说上面两个积分都很不好求，但因为我们的假设分布都是高斯分布，一通很复杂的推导之后我们会发现最后$$w</td>
+      <td>S<script type="math/tex">和</script>y^*</td>
+      <td>S,x^*$$都是高斯分布。这就是我们之前为什么全都要假设成高斯分布的原因。</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="高斯过程">高斯过程</h3>
+<p>上面的方法计算的是某个具体模型的<strong><em>参数的概率分布</em></strong>，而高斯过程直接计算所有<strong><em>模型的概率分布</em></strong>。因为不管用什么模型，我们总是对于模型有一些假设，这些假设如果符合现实会有很大的帮助，但如果不准（一般都很不准…），则会带来很大的损害。所以我们想能不能直接让算法自己选择模型，即算出模型的概率分布呢？</p>
+
+<p>那怎么才能计算模型的概率分布呢？我们知道函数可以被看做是一个无穷维的向量，我们可以假设每一维（即x上每个点）都是一个随机变量，每个随机变量都符合高斯分布，他们联合起来符合多元高斯分布（无限元高斯分布），即这个函数符合一个多元高斯分布。我们每次观测完，就可以通过最大后验概率调整这个多元高斯分布的参数。观测足够多，就可以得到接近真实的模型概率分布。</p>
+
+<p>这样的话我们要给出一个无穷维的均值向量（一个均值函数）<script type="math/tex">\mu</script>和无穷维的协方差矩阵<script type="math/tex">\sigma</script>。对于均值函数，我们可以简单粗暴的设成衡为<script type="math/tex">0</script>，原因跟之前一样，在没有信息的情况下尽量无偏；无穷维向量我们可以用恒为零的函数，可无穷维的矩阵可怎么办呢？解决方案是，我们假设两个变量的关联程度只跟他们之间的“距离”有关，越近越相关，跟其他的东西都没有关系。设衡量距离的函数为<script type="math/tex">k(x_i,x_j)</script>，则协方差中的<script type="math/tex">(i,j)</script>项为<script type="math/tex">k(x_i,x_j)</script>。给定这些先验后，我们可以说<script type="math/tex">f</script>服从这样一个高斯过程:
+<script type="math/tex">f(.) \sim GP(0,k(.,.))</script></p>
+
+<p>但是协方差矩阵不是随便拿数凑一个矩阵就行的，它必须是个半正定的矩阵才行，那<script type="math/tex">k(.,.)</script>得满足什么条件才能让协方差一定是半正定矩阵呢？答案就是<script type="math/tex">k(.,.)</script>必须得是核函数。其实根据Mercer’s theorem，核函数的定义就是使得组成的矩阵为半正定矩阵的函数。所以，<script type="math/tex">k(.,.)</script>是核函数和协方差矩阵半正定互为充要条件。我们这里就不讨论怎么构造核函数了。</p>
+
+<p>这里我们虽然没有假设模型是什么样的，只是给了一个核的先验，但核的先验其实还是隐性的限制了模型的性质。就是说高斯过程也无法探索所有可能的函数形式，只能探索部分一类满足某种条件的函数。但这种限制相比于我们预设模型满足什么形式已经弱多了，因此高斯过程相比于基于参数的方法具有更大的探索空间来寻找最合适的函数。</p>
+
+<p>接下来讲一下实践中怎么用。</p>
+
+<p>实践中要做的就是通过采样，调整模型分布的后验概率，
+虽然我们假设了一个无穷维的分布，但在现实中我们的训练数据不是无穷维的，即不可能函数上每个点都采样。我们只有部分变量的采样情况，我们假设有个训练集<script type="math/tex">(X,\bf{y})</script>，和测试集<script type="math/tex">(X_*,\bf{y_*})</script>。</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td>因为<script type="math/tex">f</script>是无穷维的，把<script type="math/tex">f</script>的后验分布表示出来既困难又没有必要，我们想要其实只是测试集上预测的分布，即$$p(\vec{y}_{*}</td>
+      <td>\vec{y}, X, X_{*})$$，我们可以直接求这个。</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><script type="math/tex">y=f(x)+\varepsilon,\ \varepsilon \sim N(0,\sigma^2)</script>
+设<script type="math/tex">\vec{f}, \vec{f^*}</script>代表<script type="math/tex">f(.)</script>在<script type="math/tex">X</script>,<script type="math/tex">X^*</script>上的输出组成的向量。
+<script type="math/tex">\vec{\varepsilon},\vec{\varepsilon^*}</script>是噪音在两个数据集上组成的向量。</p>
+
+<p>则有
+<script type="math/tex">% <![CDATA[
+\left[\begin{array}{c}{\vec{f}} \\ {\vec{f}_{*}}\end{array}\right] \Bigr| X, X_{*} \sim N\left(\overrightarrow{0},\left[\begin{array}{cc}{K(X, X)} & {K\left(X, X_{*}\right)} \\ {K\left(X_{*}, X\right)} & {K\left(X_{*}, X_{*}\right)}\end{array}\right]\right) %]]></script></p>
+
+<p><script type="math/tex">% <![CDATA[
+{\qquad\left[\begin{array}{c}{\vec{y}} \\ {\vec{y}_{*}}\end{array}\right] | X, X_{*}=\left[\begin{array}{c}{\vec{f}} \\ {\vec{f}_{*}}\end{array}\right]+\left[\begin{array}{c}{\vec{\varepsilon}} \\ {\vec{\varepsilon}_{*}}\end{array}\right] \sim \mathcal{N}\left(\overrightarrow{0},\left[\begin{array}{cc}{K(X, X)+\sigma^{2} I} & {K\left(X, X_{*}\right)} \\ {K\left(X_{*}, X\right)} & {K\left(X_{*}, X_{*}\right)+\sigma^{2} I}\end{array}\right]\right)} \\ %]]></script>
+我们现在知道了给定<script type="math/tex">X, X_*</script>的时候<script type="math/tex">y, y_*</script>的概率分布<script type="math/tex">p(\vec{y}, \vec{y}_{*}\ | X, X_{*})</script>，一个多元高斯分布。接下来我们想要算出上式的边缘分布，即<script type="math/tex">p(\vec{y}_{*} | \vec{y}, X, X_{*})</script>。一般算边缘分布的时候是要求积分的，对上式来说就是求<script type="math/tex">p(\vec{y}, \vec{y}_{*}\ | X, X_{*})</script>对<script type="math/tex">\vec{y}</script>的积分。但高斯分布实在是太优秀了，我们经过推导以后发现多元高斯的边缘分布有解析解，可以直接写出来，而且还是一个多元高斯分布！推导很复杂，这里就不讲了，感兴趣的可以看一下<a href="https://seanwangjs.github.io/2018/01/08/conditional-gaussian-distribution.html">这篇博客</a>。大家知道下式是套多元高斯分布的边缘分布公式得到的就行了，最后推出来的边缘分布是
+<script type="math/tex">{\qquad \vec{y}_{*} | \vec{y}, X, X_{*} \sim \mathcal{N}\left(\mu^{*}, \Sigma^{*}\right)}</script>
+其中
+<script type="math/tex">% <![CDATA[
+{\qquad \begin{aligned} \mu^{*} &=K\left(X_{*}, X\right)\left(K(X, X)+\sigma^{2} I\right)^{-1} \vec{y} \\ \Sigma^{*} &=K\left(X_{*}, X_{*}\right)+\sigma^{2} I-K\left(X_{*}, X\right)\left(K(X, X)+\sigma^{2} I\right)^{-1} K\left(X, X_{*}\right) \end{aligned}} %]]></script></p>
+
+<p>这样我们就得到了测试集上预测的分布！<script type="math/tex">\mu^*</script>就是我们用后验概率最大的模型在<script type="math/tex">X_*</script>上预测出来的结果。</p>
+
+<p>另外提一点，最后的结果直接由输入和先验决定，没有出现任何参数，这也是高斯过程被称为非参方法的原因。但其实我们也可以理解为非参方法实际上就是无穷参方法，因为函数的每一个点都是一个参数。或者我们把最终学到的结果看做是由训练数据作为参数的函数，训练数据越多，参数就越多。</p>
+
+<h3 id="高斯过程隐变量模型">高斯过程隐变量模型</h3>
+
+<p>高斯过程隐变量模型是一种降维的方法，这种方法假设低维到高维的映射满足一个线性模型，通过假设模型参数符合高斯分布，边缘化了模型中的参数，直接联系起了隐空间和观测空间。感兴趣的可以看一下<a href="https://zhuanlan.zhihu.com/p/30969391">这篇博客</a>。</p>
+
+<h3 id="高斯过程动态模型">高斯过程动态模型</h3>
+
+<p>高斯过程动态模型就是把高斯过程隐变量模型用于非线性动态系统建模，同样是假设参数满足高斯分布，通过计算边缘分布消掉参数，建立起隐空间和观测空间的联系。</p>
+
+
+  </div>
+
+
+  <div class="page-navigation">
+    
+      <a class="prev" href="/blog/2019/09/16/meta-learning.html">&larr; 元学习: 学习如何学习【译】</a>
+    
+
+    
+  </div>
+
+  
+
+</article>
+
+      </div>
+    </main>
+
+    <div style="clear: both;"/>
+<footer class="site-footer">
+    2019 &copy; Built by <a href="https://jekyllrb.com/" target="_blank">Jekyll</a> and <a href="https://github.com/jekyll/minima/" target="_blank">minima</a> | View <a href="https://github.com/wei-tianhao/blog" target="_blank">this</a> on Github | <a href="/blog/tags.html">Tags</a> | <a href="/blog/contact.html">Contact</a> | <a href="/blog/FAQ.html">FAQ</a>
+
+    <p>
+        <a href="/blog/feed.xml" target="_blank">
+            <img src="/blog/assets/images/logo_rss.png" />
+        </a>
+        <a href="https://scholar.google.com/citations?user=V22j1C0AAAAJ&hl=en" target="_blank">
+            <img src="/blog/assets/images/logo_scholar.png" />
+        </a>
+        <a href="https://github.com/wei-tianhao/" target="_blank">
+            <img src="/blog/assets/images/logo_github.png" />
+        </a>
+        <!-- <a href="https://www.instagram.com/lilianweng/" target="_blank">
+            <img src="/blog/assets/images/logo_instagram.png" />
+        </a> -->
+        <!-- <a href="https://twitter.com/lilianweng/" target="_blank">
+            <img src="/blog/assets/images/logo_twitter.png" />
+        </a> -->
+    </p>
+</footer>
+
+
+  </body>
+
+</html>

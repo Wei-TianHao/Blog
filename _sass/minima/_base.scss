@@ -177,9 +177,9 @@ a {
   color: $brand-color;
   text-decoration: none;
 
-  &:visited {
-    color: $brand-color;
-  }
+//   &:visited {
+//     color: $brand-color;
+//   }
 
   &:hover {
     color: $highlight-color-light;
@@ -195,6 +195,27 @@ a {
   }
 }
 
+#post-a {
+    color: #000000;
+    text-decoration: none;
+  
+    // &:visited {
+    //   color: #000000;
+    // }
+  
+    &:hover {
+      color: $highlight-color-light;
+      text-decoration: underline;
+    }
+  
+    .social-media-list &:hover {
+      text-decoration: none;
+  
+      .username {
+        text-decoration: underline;
+      }
+    }
+  }
 
 /**
  * Blockquotes

@@ -1,0 +1,1245 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.5">Jekyll</generator><link href="http://localhost:4000/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/blog/" rel="alternate" type="text/html" /><updated>2019-10-21T23:00:56-04:00</updated><id>http://localhost:4000/blog/feed.xml</id><title type="html">TH的自言自语</title><subtitle>Document my learning notes.</subtitle><author><name>Tianhao Wei</name></author><entry><title type="html">高斯过程回归科普</title><link href="http://localhost:4000/blog/2019/09/23/gaussian-process.html" rel="alternate" type="text/html" title="高斯过程回归科普" /><published>2019-09-23T22:00:00-04:00</published><updated>2019-09-23T22:00:00-04:00</updated><id>http://localhost:4000/blog/2019/09/23/gaussian-process</id><content type="html" xml:base="http://localhost:4000/blog/2019/09/23/gaussian-process.html">&lt;blockquote&gt;
+  &lt;p&gt;高斯过程最关键的思想就是，你不想要什么变量，就对这个变量做高斯分布假设…然后就可以计算关于这个变量的边缘分布，把这个变量消掉，建立起其他变量之间的直接联系。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;!--more--&gt;
+
+&lt;h3 id=&quot;简介&quot;&gt;简介&lt;/h3&gt;
+
+&lt;p&gt;高斯过程回归是一类贝叶斯非参方法，解决的问题是给定一堆数据点&lt;script type=&quot;math/tex&quot;&gt;(x,y)&lt;/script&gt;后，如何寻找拟合数据最好的函数，同时给出函数的分布，类似于置信区间。&lt;/p&gt;
+
+&lt;p&gt;为了引入高斯过程回归，我们先讲一下参数方法，贝叶斯线性回归。&lt;/p&gt;
+
+&lt;h3 id=&quot;贝叶斯线性回归&quot;&gt;贝叶斯线性回归&lt;/h3&gt;
+
+&lt;p&gt;假设我们现在有一堆数据点&lt;script type=&quot;math/tex&quot;&gt;S=(x,y)&lt;/script&gt;，数据的分布满足
+&lt;script type=&quot;math/tex&quot;&gt;y=f(x)+\epsilon,\ \epsilon \sim N(0,\sigma^2)&lt;/script&gt;
+其中我们假设&lt;script type=&quot;math/tex&quot;&gt;f(x)=w^T x&lt;/script&gt;，即线性模型，&lt;script type=&quot;math/tex&quot;&gt;\epsilon&lt;/script&gt;是观测噪音。&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;我们现在的目标是求一个最好的&lt;script type=&quot;math/tex&quot;&gt;w&lt;/script&gt;使得&lt;script type=&quot;math/tex&quot;&gt;f&lt;/script&gt;尽量好的拟合这些数据点。一个可行的想法是：如果我们知道给定&lt;script type=&quot;math/tex&quot;&gt;S&lt;/script&gt;以后&lt;script type=&quot;math/tex&quot;&gt;w&lt;/script&gt;的概率分布，那我们就能轻易选出最好的&lt;script type=&quot;math/tex&quot;&gt;w&lt;/script&gt;了。即我们的目标是求&lt;script type=&quot;math/tex&quot;&gt;w&lt;/script&gt;的后验概率分布$$p(w&lt;/td&gt;
+      &lt;td&gt;S)$$。&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;table&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;但这个没法直接求，因为逻辑上来说&lt;script type=&quot;math/tex&quot;&gt;w&lt;/script&gt;并不取决于你的数据集是什么。所以我们想能不能利用贝叶斯方法，用&lt;script type=&quot;math/tex&quot;&gt;p(w)&lt;/script&gt;和$$p(S&lt;/td&gt;
+      &lt;td&gt;w)$$来求？&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;p(w)&lt;/script&gt;可以由我们指定，因为求后验概率的过程就是根据观察调整一个概率分布超参数的过程。我们用&lt;script type=&quot;math/tex&quot;&gt;p(w) \sim N(0,\tau^2 I)&lt;/script&gt;，使用高斯分布的原因待会会解释，均值设为&lt;script type=&quot;math/tex&quot;&gt;0&lt;/script&gt;是因为我们其实并不知道&lt;script type=&quot;math/tex&quot;&gt;w&lt;/script&gt;的分布是怎样的，所以应该尽量少的引入先验知识，而&lt;script type=&quot;math/tex&quot;&gt;0&lt;/script&gt;是最无偏的估计。&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;而$$p(S&lt;/td&gt;
+      &lt;td&gt;w)&lt;script type=&quot;math/tex&quot;&gt;其实就是&lt;/script&gt;p(y&lt;/td&gt;
+      &lt;td&gt;x,w)&lt;script type=&quot;math/tex&quot;&gt;，这两个是完全等价的，因为&lt;/script&gt;(x,y)&lt;script type=&quot;math/tex&quot;&gt;是一起给定的，&lt;/script&gt;p(y&lt;/td&gt;
+      &lt;td&gt;x)=1$$&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;现在我们知道了&lt;script type=&quot;math/tex&quot;&gt;p(S|w)&lt;/script&gt;和&lt;script type=&quot;math/tex&quot;&gt;p(w)&lt;/script&gt;，用贝叶斯公式求&lt;script type=&quot;math/tex&quot;&gt;p(w|S)&lt;/script&gt;
+&lt;script type=&quot;math/tex&quot;&gt;p(w|S) = \frac{p(S|w)\ p(w)}{p(S)}\\
+p(S)=\int p(w)\ p(S|w)\ dw&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;这样我们就能选出最适用于当前数据&lt;script type=&quot;math/tex&quot;&gt;S&lt;/script&gt;和模型&lt;script type=&quot;math/tex&quot;&gt;f&lt;/script&gt;的参数&lt;script type=&quot;math/tex&quot;&gt;w&lt;/script&gt;啦！假设我们的测试集是&lt;script type=&quot;math/tex&quot;&gt;(x^*,y^*)&lt;/script&gt;，把&lt;script type=&quot;math/tex&quot;&gt;w&lt;/script&gt;带进去就可以对&lt;script type=&quot;math/tex&quot;&gt;x^*&lt;/script&gt;进行预测。&lt;/p&gt;
+
+&lt;p&gt;但贝叶斯方法有个额外的好处，就是不光能给出预测，还能给出预测的分布，即
+&lt;script type=&quot;math/tex&quot;&gt;p(y^*|S,x^*) = \int p(y^*|x^*,w)\ p(w|S)\ dw&lt;/script&gt;&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;一般来说上面两个积分都很不好求，但因为我们的假设分布都是高斯分布，一通很复杂的推导之后我们会发现最后$$w&lt;/td&gt;
+      &lt;td&gt;S&lt;script type=&quot;math/tex&quot;&gt;和&lt;/script&gt;y^*&lt;/td&gt;
+      &lt;td&gt;S,x^*$$都是高斯分布。这就是我们之前为什么全都要假设成高斯分布的原因。&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;h3 id=&quot;高斯过程&quot;&gt;高斯过程&lt;/h3&gt;
+&lt;p&gt;上面的方法计算的是某个具体模型的&lt;strong&gt;&lt;em&gt;参数的概率分布&lt;/em&gt;&lt;/strong&gt;，而高斯过程直接计算所有&lt;strong&gt;&lt;em&gt;模型的概率分布&lt;/em&gt;&lt;/strong&gt;。因为不管用什么模型，我们总是对于模型有一些假设，这些假设如果符合现实会有很大的帮助，但如果不准（一般都很不准…），则会带来很大的损害。所以我们想能不能直接让算法自己选择模型，即算出模型的概率分布呢？&lt;/p&gt;
+
+&lt;p&gt;那怎么才能计算模型的概率分布呢？我们知道函数可以被看做是一个无穷维的向量，我们可以假设每一维（即x上每个点）都是一个随机变量，每个随机变量都符合高斯分布，他们联合起来符合多元高斯分布（无限元高斯分布），即这个函数符合一个多元高斯分布。我们每次观测完，就可以通过最大后验概率调整这个多元高斯分布的参数。观测足够多，就可以得到接近真实的模型概率分布。&lt;/p&gt;
+
+&lt;p&gt;这样的话我们要给出一个无穷维的均值向量（一个均值函数）&lt;script type=&quot;math/tex&quot;&gt;\mu&lt;/script&gt;和无穷维的协方差矩阵&lt;script type=&quot;math/tex&quot;&gt;\sigma&lt;/script&gt;。对于均值函数，我们可以简单粗暴的设成衡为&lt;script type=&quot;math/tex&quot;&gt;0&lt;/script&gt;，原因跟之前一样，在没有信息的情况下尽量无偏；无穷维向量我们可以用恒为零的函数，可无穷维的矩阵可怎么办呢？解决方案是，我们假设两个变量的关联程度只跟他们之间的“距离”有关，越近越相关，跟其他的东西都没有关系。设衡量距离的函数为&lt;script type=&quot;math/tex&quot;&gt;k(x_i,x_j)&lt;/script&gt;，则协方差中的&lt;script type=&quot;math/tex&quot;&gt;(i,j)&lt;/script&gt;项为&lt;script type=&quot;math/tex&quot;&gt;k(x_i,x_j)&lt;/script&gt;。给定这些先验后，我们可以说&lt;script type=&quot;math/tex&quot;&gt;f&lt;/script&gt;服从这样一个高斯过程:
+&lt;script type=&quot;math/tex&quot;&gt;f(.) \sim GP(0,k(.,.))&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;但是协方差矩阵不是随便拿数凑一个矩阵就行的，它必须是个半正定的矩阵才行，那&lt;script type=&quot;math/tex&quot;&gt;k(.,.)&lt;/script&gt;得满足什么条件才能让协方差一定是半正定矩阵呢？答案就是&lt;script type=&quot;math/tex&quot;&gt;k(.,.)&lt;/script&gt;必须得是核函数。其实根据Mercer’s theorem，核函数的定义就是使得组成的矩阵为半正定矩阵的函数。所以，&lt;script type=&quot;math/tex&quot;&gt;k(.,.)&lt;/script&gt;是核函数和协方差矩阵半正定互为充要条件。我们这里就不讨论怎么构造核函数了。&lt;/p&gt;
+
+&lt;p&gt;这里我们虽然没有假设模型是什么样的，只是给了一个核的先验，但核的先验其实还是隐性的限制了模型的性质。就是说高斯过程也无法探索所有可能的函数形式，只能探索部分一类满足某种条件的函数。但这种限制相比于我们预设模型满足什么形式已经弱多了，因此高斯过程相比于基于参数的方法具有更大的探索空间来寻找最合适的函数。&lt;/p&gt;
+
+&lt;p&gt;接下来讲一下实践中怎么用。&lt;/p&gt;
+
+&lt;p&gt;实践中要做的就是通过采样，调整模型分布的后验概率，
+虽然我们假设了一个无穷维的分布，但在现实中我们的训练数据不是无穷维的，即不可能函数上每个点都采样。我们只有部分变量的采样情况，我们假设有个训练集&lt;script type=&quot;math/tex&quot;&gt;(X,\bf{y})&lt;/script&gt;，和测试集&lt;script type=&quot;math/tex&quot;&gt;(X_*,\bf{y_*})&lt;/script&gt;。&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;因为&lt;script type=&quot;math/tex&quot;&gt;f&lt;/script&gt;是无穷维的，把&lt;script type=&quot;math/tex&quot;&gt;f&lt;/script&gt;的后验分布表示出来既困难又没有必要，我们想要其实只是测试集上预测的分布，即$$p(\vec{y}_{*}&lt;/td&gt;
+      &lt;td&gt;\vec{y}, X, X_{*})$$，我们可以直接求这个。&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;y=f(x)+\varepsilon,\ \varepsilon \sim N(0,\sigma^2)&lt;/script&gt;
+设&lt;script type=&quot;math/tex&quot;&gt;\vec{f}, \vec{f^*}&lt;/script&gt;代表&lt;script type=&quot;math/tex&quot;&gt;f(.)&lt;/script&gt;在&lt;script type=&quot;math/tex&quot;&gt;X&lt;/script&gt;,&lt;script type=&quot;math/tex&quot;&gt;X^*&lt;/script&gt;上的输出组成的向量。
+&lt;script type=&quot;math/tex&quot;&gt;\vec{\varepsilon},\vec{\varepsilon^*}&lt;/script&gt;是噪音在两个数据集上组成的向量。&lt;/p&gt;
+
+&lt;p&gt;则有
+&lt;script type=&quot;math/tex&quot;&gt;% &lt;![CDATA[
+\left[\begin{array}{c}{\vec{f}} \\ {\vec{f}_{*}}\end{array}\right] \Bigr| X, X_{*} \sim N\left(\overrightarrow{0},\left[\begin{array}{cc}{K(X, X)} &amp; {K\left(X, X_{*}\right)} \\ {K\left(X_{*}, X\right)} &amp; {K\left(X_{*}, X_{*}\right)}\end{array}\right]\right) %]]&gt;&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;% &lt;![CDATA[
+{\qquad\left[\begin{array}{c}{\vec{y}} \\ {\vec{y}_{*}}\end{array}\right] | X, X_{*}=\left[\begin{array}{c}{\vec{f}} \\ {\vec{f}_{*}}\end{array}\right]+\left[\begin{array}{c}{\vec{\varepsilon}} \\ {\vec{\varepsilon}_{*}}\end{array}\right] \sim \mathcal{N}\left(\overrightarrow{0},\left[\begin{array}{cc}{K(X, X)+\sigma^{2} I} &amp; {K\left(X, X_{*}\right)} \\ {K\left(X_{*}, X\right)} &amp; {K\left(X_{*}, X_{*}\right)+\sigma^{2} I}\end{array}\right]\right)} \\ %]]&gt;&lt;/script&gt;
+我们现在知道了给定&lt;script type=&quot;math/tex&quot;&gt;X, X_*&lt;/script&gt;的时候&lt;script type=&quot;math/tex&quot;&gt;y, y_*&lt;/script&gt;的概率分布&lt;script type=&quot;math/tex&quot;&gt;p(\vec{y}, \vec{y}_{*}\ | X, X_{*})&lt;/script&gt;，一个多元高斯分布。接下来我们想要算出上式的边缘分布，即&lt;script type=&quot;math/tex&quot;&gt;p(\vec{y}_{*} | \vec{y}, X, X_{*})&lt;/script&gt;。一般算边缘分布的时候是要求积分的，对上式来说就是求&lt;script type=&quot;math/tex&quot;&gt;p(\vec{y}, \vec{y}_{*}\ | X, X_{*})&lt;/script&gt;对&lt;script type=&quot;math/tex&quot;&gt;\vec{y}&lt;/script&gt;的积分。但高斯分布实在是太优秀了，我们经过推导以后发现多元高斯的边缘分布有解析解，可以直接写出来，而且还是一个多元高斯分布！推导很复杂，这里就不讲了，感兴趣的可以看一下&lt;a href=&quot;https://seanwangjs.github.io/2018/01/08/conditional-gaussian-distribution.html&quot;&gt;这篇博客&lt;/a&gt;。大家知道下式是套多元高斯分布的边缘分布公式得到的就行了，最后推出来的边缘分布是
+&lt;script type=&quot;math/tex&quot;&gt;{\qquad \vec{y}_{*} | \vec{y}, X, X_{*} \sim \mathcal{N}\left(\mu^{*}, \Sigma^{*}\right)}&lt;/script&gt;
+其中
+&lt;script type=&quot;math/tex&quot;&gt;% &lt;![CDATA[
+{\qquad \begin{aligned} \mu^{*} &amp;=K\left(X_{*}, X\right)\left(K(X, X)+\sigma^{2} I\right)^{-1} \vec{y} \\ \Sigma^{*} &amp;=K\left(X_{*}, X_{*}\right)+\sigma^{2} I-K\left(X_{*}, X\right)\left(K(X, X)+\sigma^{2} I\right)^{-1} K\left(X, X_{*}\right) \end{aligned}} %]]&gt;&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;这样我们就得到了测试集上预测的分布！&lt;script type=&quot;math/tex&quot;&gt;\mu^*&lt;/script&gt;就是我们用后验概率最大的模型在&lt;script type=&quot;math/tex&quot;&gt;X_*&lt;/script&gt;上预测出来的结果。&lt;/p&gt;
+
+&lt;p&gt;另外提一点，最后的结果直接由输入和先验决定，没有出现任何参数，这也是高斯过程被称为非参方法的原因。但其实我们也可以理解为非参方法实际上就是无穷参方法，因为函数的每一个点都是一个参数。或者我们把最终学到的结果看做是由训练数据作为参数的函数，训练数据越多，参数就越多。&lt;/p&gt;
+
+&lt;h3 id=&quot;高斯过程隐变量模型&quot;&gt;高斯过程隐变量模型&lt;/h3&gt;
+
+&lt;p&gt;高斯过程隐变量模型是一种降维的方法，这种方法假设低维到高维的映射满足一个线性模型，通过假设模型参数符合高斯分布，边缘化了模型中的参数，直接联系起了隐空间和观测空间。感兴趣的可以看一下&lt;a href=&quot;https://zhuanlan.zhihu.com/p/30969391&quot;&gt;这篇博客&lt;/a&gt;。&lt;/p&gt;
+
+&lt;h3 id=&quot;高斯过程动态模型&quot;&gt;高斯过程动态模型&lt;/h3&gt;
+
+&lt;p&gt;高斯过程动态模型就是把高斯过程隐变量模型用于非线性动态系统建模，同样是假设参数满足高斯分布，通过计算边缘分布消掉参数，建立起隐空间和观测空间的联系。&lt;/p&gt;</content><author><name>Tianhao Wei</name></author><category term="bayesian-methods" /><category term="machine-learning" /><summary type="html">高斯过程最关键的思想就是，你不想要什么变量，就对这个变量做高斯分布假设…然后就可以计算关于这个变量的边缘分布，把这个变量消掉，建立起其他变量之间的直接联系。</summary></entry><entry><title type="html">元学习: 学习如何学习【译】</title><link href="http://localhost:4000/blog/2019/09/16/meta-learning.html" rel="alternate" type="text/html" title="元学习: 学习如何学习【译】" /><published>2019-09-16T20:00:00-04:00</published><updated>2019-09-16T20:00:00-04:00</updated><id>http://localhost:4000/blog/2019/09/16/meta-learning</id><content type="html" xml:base="http://localhost:4000/blog/2019/09/16/meta-learning.html">&lt;blockquote&gt;
+  &lt;p&gt;学习如何学习的方法被称为元学习。元学习的目标是在接触到没见过的任务或者迁移到新环境中时，可以根据之前的经验和少量的样本快速学习如何应对。元学习有三种常见的实现方法：1）学习有效的距离度量方式（基于度量的方法）；2）使用带有显式或隐式记忆储存的（循环）神经网络（基于模型的方法）；3）训练以快速学习为目标的模型（基于优化的方法）&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;!--more--&gt;
+
+&lt;p&gt;&lt;strong&gt;本文翻译自&lt;a href=&quot;https://lilianweng.github.io/lil-log/2018/11/30/meta-learning.html&quot;&gt;Lilian&lt;/a&gt;的英文博客，Lilian的博客质量非常高，大家多多关注~&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;好的机器学习模型经常需要大量的数据来进行训练，但人却恰恰相反。小孩子看过一两次喵喵和小鸟后就能分辨出他们的区别。会骑自行车的人很快就能学会骑摩托车，有时候甚至不用人教。那么有没有可能让机器学习模型也具有相似的性质呢？如何才能让模型仅仅用少量的数据就学会新的概念和技能呢？这就是&lt;strong&gt;元学习&lt;/strong&gt;要解决的问题。&lt;/p&gt;
+
+&lt;p&gt;我们期望好的元学习模型能够具备强大的适应能力和泛化能力。在测试时，模型会先经过一个自适应环节（adaptation process），即根据少量样本学习任务。经过自适应后，模型即可完成新的任务。自适应本质上来说就是一个短暂的学习过程，这就是为什么元学习也被称作&lt;a href=&quot;https://www.cs.cmu.edu/~rsalakhu/papers/LakeEtAl2015Science.pdf&quot;&gt;“学习”学习&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;元学习可以解决的任务可以是任意一类定义好的机器学习任务，像是监督学习，强化学习等。具体的元学习任务例子有：&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;在没有猫的训练集上训练出来一个图片分类器，这个分类器需要在看过少数几张猫的照片后分辨出测试集的照片中有没有猫。&lt;/li&gt;
+  &lt;li&gt;训练一个玩游戏的AI，这个AI需要快速学会如何玩一个从来没玩过的游戏。&lt;/li&gt;
+  &lt;li&gt;一个仅在平地上训练过的机器人，需要在山坡上完成给定的任务。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;ul class=&quot;table-of-content&quot; id=&quot;markdown-toc&quot;&gt;
+  &lt;li&gt;&lt;a href=&quot;#元学习问题定义&quot; id=&quot;markdown-toc-元学习问题定义&quot;&gt;元学习问题定义&lt;/a&gt;    &lt;ul&gt;
+      &lt;li&gt;&lt;a href=&quot;#a-simple-view&quot; id=&quot;markdown-toc-a-simple-view&quot;&gt;A Simple View&lt;/a&gt;&lt;/li&gt;
+      &lt;li&gt;&lt;a href=&quot;#像测试一样训练&quot; id=&quot;markdown-toc-像测试一样训练&quot;&gt;像测试一样训练&lt;/a&gt;&lt;/li&gt;
+      &lt;li&gt;&lt;a href=&quot;#学习器和元学习器&quot; id=&quot;markdown-toc-学习器和元学习器&quot;&gt;学习器和元学习器&lt;/a&gt;&lt;/li&gt;
+      &lt;li&gt;&lt;a href=&quot;#常见方法&quot; id=&quot;markdown-toc-常见方法&quot;&gt;常见方法&lt;/a&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#基于度量的方法&quot; id=&quot;markdown-toc-基于度量的方法&quot;&gt;基于度量的方法&lt;/a&gt;    &lt;ul&gt;
+      &lt;li&gt;&lt;a href=&quot;#convolutional-siamese-neural-network&quot; id=&quot;markdown-toc-convolutional-siamese-neural-network&quot;&gt;Convolutional Siamese Neural Network&lt;/a&gt;&lt;/li&gt;
+      &lt;li&gt;&lt;a href=&quot;#matching-networks&quot; id=&quot;markdown-toc-matching-networks&quot;&gt;Matching Networks&lt;/a&gt;        &lt;ul&gt;
+          &lt;li&gt;&lt;a href=&quot;#simple-embedding&quot; id=&quot;markdown-toc-simple-embedding&quot;&gt;Simple Embedding&lt;/a&gt;&lt;/li&gt;
+          &lt;li&gt;&lt;a href=&quot;#full-context-embeddings&quot; id=&quot;markdown-toc-full-context-embeddings&quot;&gt;Full Context Embeddings&lt;/a&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/li&gt;
+      &lt;li&gt;&lt;a href=&quot;#relation-network&quot; id=&quot;markdown-toc-relation-network&quot;&gt;Relation Network&lt;/a&gt;&lt;/li&gt;
+      &lt;li&gt;&lt;a href=&quot;#prototypical-networks&quot; id=&quot;markdown-toc-prototypical-networks&quot;&gt;Prototypical Networks&lt;/a&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#基于模型的方法&quot; id=&quot;markdown-toc-基于模型的方法&quot;&gt;基于模型的方法&lt;/a&gt;    &lt;ul&gt;
+      &lt;li&gt;&lt;a href=&quot;#memory-augmented-neural-networks&quot; id=&quot;markdown-toc-memory-augmented-neural-networks&quot;&gt;Memory-Augmented Neural Networks&lt;/a&gt;        &lt;ul&gt;
+          &lt;li&gt;&lt;a href=&quot;#mann-for-meta-learning&quot; id=&quot;markdown-toc-mann-for-meta-learning&quot;&gt;MANN for Meta-Learning&lt;/a&gt;&lt;/li&gt;
+          &lt;li&gt;&lt;a href=&quot;#addressing-mechanism-for-meta-learning&quot; id=&quot;markdown-toc-addressing-mechanism-for-meta-learning&quot;&gt;Addressing Mechanism for Meta-Learning&lt;/a&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/li&gt;
+      &lt;li&gt;&lt;a href=&quot;#meta-networks&quot; id=&quot;markdown-toc-meta-networks&quot;&gt;Meta Networks&lt;/a&gt;        &lt;ul&gt;
+          &lt;li&gt;&lt;a href=&quot;#fast-weights&quot; id=&quot;markdown-toc-fast-weights&quot;&gt;Fast Weights&lt;/a&gt;&lt;/li&gt;
+          &lt;li&gt;&lt;a href=&quot;#model-components&quot; id=&quot;markdown-toc-model-components&quot;&gt;Model Components&lt;/a&gt;&lt;/li&gt;
+          &lt;li&gt;&lt;a href=&quot;#训练过程&quot; id=&quot;markdown-toc-训练过程&quot;&gt;训练过程&lt;/a&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#optimization-based&quot; id=&quot;markdown-toc-optimization-based&quot;&gt;Optimization-Based&lt;/a&gt;    &lt;ul&gt;
+      &lt;li&gt;&lt;a href=&quot;#lstm-meta-learner&quot; id=&quot;markdown-toc-lstm-meta-learner&quot;&gt;LSTM Meta-Learner&lt;/a&gt;        &lt;ul&gt;
+          &lt;li&gt;&lt;a href=&quot;#why-lstm&quot; id=&quot;markdown-toc-why-lstm&quot;&gt;Why LSTM?&lt;/a&gt;&lt;/li&gt;
+          &lt;li&gt;&lt;a href=&quot;#model-setup&quot; id=&quot;markdown-toc-model-setup&quot;&gt;Model Setup&lt;/a&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/li&gt;
+      &lt;li&gt;&lt;a href=&quot;#maml&quot; id=&quot;markdown-toc-maml&quot;&gt;MAML&lt;/a&gt;        &lt;ul&gt;
+          &lt;li&gt;&lt;a href=&quot;#first-order-maml&quot; id=&quot;markdown-toc-first-order-maml&quot;&gt;First-Order MAML&lt;/a&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/li&gt;
+      &lt;li&gt;&lt;a href=&quot;#reptile&quot; id=&quot;markdown-toc-reptile&quot;&gt;Reptile&lt;/a&gt;        &lt;ul&gt;
+          &lt;li&gt;&lt;a href=&quot;#the-optimization-assumption&quot; id=&quot;markdown-toc-the-optimization-assumption&quot;&gt;The Optimization Assumption&lt;/a&gt;&lt;/li&gt;
+          &lt;li&gt;&lt;a href=&quot;#reptile-vs-fomaml&quot; id=&quot;markdown-toc-reptile-vs-fomaml&quot;&gt;Reptile vs FOMAML&lt;/a&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#reference&quot; id=&quot;markdown-toc-reference&quot;&gt;Reference&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;元学习问题定义&quot;&gt;元学习问题定义&lt;/h2&gt;
+
+&lt;p&gt;在本文中，我们主要关注监督学习中的元学习任务，比如图像分类。在之后的文章中我们会继续讲解更有意思的元强化学习。&lt;/p&gt;
+
+&lt;h3 id=&quot;a-simple-view&quot;&gt;A Simple View&lt;/h3&gt;
+
+&lt;p&gt;我们现在假设有一个任务的分布，我们从这个分布中采样了许多任务作为训练集。好的元学习模型在这个训练集上训练后，应当对这个空间里所有的任务都具有良好的表现，即使是从来没见过的任务。每个任务可以表示为一个数据集 &lt;script type=&quot;math/tex&quot;&gt;\mathcal{D}&lt;/script&gt; ，数据集中包括特征向量 &lt;script type=&quot;math/tex&quot;&gt;x&lt;/script&gt; 和标签 &lt;script type=&quot;math/tex&quot;&gt;y&lt;/script&gt; ，分布表示为 &lt;script type=&quot;math/tex&quot;&gt;p(\mathcal{D})&lt;/script&gt; 。那么最佳的元学习模型参数可以表示为：&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\theta^* = \arg\min_\theta \mathbb{E}_{\mathcal{D}\sim p(\mathcal{D})} [\mathcal{L}_\theta(\mathcal{D})]&lt;/script&gt;
+
+&lt;p&gt;上式的形式跟一般的学习任务非常像，只不过上式中的每个&lt;em&gt;数据集&lt;/em&gt;是一个&lt;em&gt;数据样本&lt;/em&gt;。&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;少样本学习（Few-shot classification）&lt;/em&gt; 是元学习的在监督学习中的一个实例。数据集 &lt;script type=&quot;math/tex&quot;&gt;\mathcal{D}&lt;/script&gt; 经常被划分为两部分，一个用于学习的支持集（support set） &lt;script type=&quot;math/tex&quot;&gt;S&lt;/script&gt; ，和一个用于训练和测试的预测集（prediction set） &lt;script type=&quot;math/tex&quot;&gt;B&lt;/script&gt; ，即 &lt;script type=&quot;math/tex&quot;&gt;\mathcal{D}=\langle S, B\rangle&lt;/script&gt; 。&lt;em&gt;K-shot N-class&lt;/em&gt;分类任务，即支持集中有N类数据，每类数据有K个带有标注的样本。&lt;/p&gt;
+
+&lt;p style=&quot;width: 100%;&quot; class=&quot;center&quot;&gt;&lt;img src=&quot;/blog/assets/images/2019-09-19-meta-learning/few-shot-classification.png&quot; alt=&quot;few-shot-classification&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Fig. 1. 4-shot 2-class 图像分类的例子。 (图像来自&lt;a href=&quot;https://www.pinterest.com/&quot;&gt;Pinterest&lt;/a&gt;)&lt;/em&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;像测试一样训练&quot;&gt;像测试一样训练&lt;/h3&gt;
+
+&lt;p&gt;一个数据集 &lt;script type=&quot;math/tex&quot;&gt;\mathcal{D}&lt;/script&gt; 包含许多对特征向量和标签，即 &lt;script type=&quot;math/tex&quot;&gt;\mathcal{D} = \{(\mathbf{x}_i, y_i)\}&lt;/script&gt; 。每个标签属于一个标签类 &lt;script type=&quot;math/tex&quot;&gt;\mathcal{L}&lt;/script&gt; 。假设我们的分类器 &lt;script type=&quot;math/tex&quot;&gt;f_\theta&lt;/script&gt; 的输入是特征向量 &lt;script type=&quot;math/tex&quot;&gt;\mathbf{x}&lt;/script&gt; ，输出是属于第 &lt;script type=&quot;math/tex&quot;&gt;y&lt;/script&gt; 类的概率 &lt;script type=&quot;math/tex&quot;&gt;P_\theta(y\vert\mathbf{x})&lt;/script&gt; ， &lt;script type=&quot;math/tex&quot;&gt;\theta&lt;/script&gt; 是分类器的参数。&lt;/p&gt;
+
+&lt;p&gt;如果我们每次选一个 &lt;script type=&quot;math/tex&quot;&gt;B \subset \mathcal{D}&lt;/script&gt; 作为训练的batch，则最佳的模型参数，应当能够最大化，多组batch的正确标签概率之和。&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{aligned}
+\theta^* &amp;= {\arg\max}_{\theta} \mathbb{E}_{(\mathbf{x}, y)\in \mathcal{D}}[P_\theta(y \vert \mathbf{x})] &amp;\\
+\theta^* &amp;= {\arg\max}_{\theta} \mathbb{E}_{B\subset \mathcal{D}}[\sum_{(\mathbf{x}, y)\in B}P_\theta(y \vert \mathbf{x})] &amp; \scriptstyle{\text{; trained with mini-batches.}}
+\end{aligned} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;few-shot classification的目标是，在小规模的support set上“快速学习”（类似fine-tuning）后，能够减少在prediction set上的预测误差。为了训练模型快速学习的能力，我们在训练的时候按照以下步骤：&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;采样一个标签的子集, &lt;script type=&quot;math/tex&quot;&gt;L\subset\mathcal{L}&lt;/script&gt; .&lt;/li&gt;
+  &lt;li&gt;根据采样的标签子集，采样一个support set &lt;script type=&quot;math/tex&quot;&gt;S^L \subset \mathcal{D}&lt;/script&gt; 和一个training batch &lt;script type=&quot;math/tex&quot;&gt;B^L \subset \mathcal{D}&lt;/script&gt; 。 &lt;script type=&quot;math/tex&quot;&gt;S^L&lt;/script&gt; 和 &lt;script type=&quot;math/tex&quot;&gt;B^L&lt;/script&gt; 中的数据的标签都属于 &lt;script type=&quot;math/tex&quot;&gt;L&lt;/script&gt; ，即 &lt;script type=&quot;math/tex&quot;&gt;y \in L, \forall (x, y) \in S^L, B^L&lt;/script&gt; .&lt;/li&gt;
+  &lt;li&gt;把support set作为模型的输入，进行“快速学习”。注意，不同的算法具有不同的学习策略，但总的来说，这一步不会永久性更新模型参数。 &lt;!-- , $$ \hat{y}=f_\theta(\mathbf{x}, S^L) $$ --&gt;&lt;/li&gt;
+  &lt;li&gt;把prediction set作为模型的输入，计算模型在 &lt;script type=&quot;math/tex&quot;&gt;B^L&lt;/script&gt; 上的loss，根据这个loss进行反向传播更新模型参数。这一步与监督学习一致。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;你可以把每一对 &lt;script type=&quot;math/tex&quot;&gt;(S^L, B^L)&lt;/script&gt; 看做是一个数据点。模型被训练出了在其他数据集上扩展的能力。下式中的红色部分是元学习的目标相比于监督学习的目标多出来的部分。&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\theta = \arg\max_\theta \color{red}{E_{L\subset\mathcal{L}}[} E_{\color{red}{S^L \subset\mathcal{D}, }B^L \subset\mathcal{D}} [\sum_{(x, y)\in B^L} P_\theta(x, y\color{red}{, S^L})] \color{red}{]}&lt;/script&gt;
+
+&lt;p&gt;这个想法有点像是我们面对某个只有少量数据的任务时，会使用在相关任务的大数据集上预训练的模型，然后进行fine-tuning。像是图形语义分割网络可以用在ImageNet上预训练的模型做初始化。相比于在一个特定任务上fine-tuning使得模型更好的拟合这个任务，元学习更进一步，它的目标是让模型优化以后能够在多个任务上表现的更好，类似于变得更容易被fine-tuning。&lt;/p&gt;
+
+&lt;h3 id=&quot;学习器和元学习器&quot;&gt;学习器和元学习器&lt;/h3&gt;
+
+&lt;p&gt;还有一种常见的看待meta-learning的视角，把模型的更新划分为了两个阶段：&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;根据给定的任务，训练一个分类器 &lt;script type=&quot;math/tex&quot;&gt;f_\theta&lt;/script&gt; 完成任务，作为“学习器”模型&lt;/li&gt;
+  &lt;li&gt;同时，训练一个元学习器 &lt;script type=&quot;math/tex&quot;&gt;g_\phi&lt;/script&gt; ，根据support set &lt;script type=&quot;math/tex&quot;&gt;S&lt;/script&gt; 学习如何更新学习器模型的参数。 &lt;script type=&quot;math/tex&quot;&gt;\theta' = g_\phi(\theta, S)&lt;/script&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;则最后的优化目标中，我们需要更新 &lt;script type=&quot;math/tex&quot;&gt;\theta&lt;/script&gt; 和 &lt;script type=&quot;math/tex&quot;&gt;\phi&lt;/script&gt; 来最大化：&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\mathbb{E}_{L\subset\mathcal{L}}[ \mathbb{E}_{S^L \subset\mathcal{D}, B^L \subset\mathcal{D}} [\sum_{(\mathbf{x}, y)\in B^L} P_{g_\phi(\theta, S^L)}(y \vert \mathbf{x})]]&lt;/script&gt;
+
+&lt;h3 id=&quot;常见方法&quot;&gt;常见方法&lt;/h3&gt;
+
+&lt;p&gt;元学习主要有三类常见的方法：基于度量的方法（metric-based），基于模型的方法（model-based），基于优化的方法（optimization-based）。
+Oriol Vinyals在NIPS 2018的meta-learning symposium上做了一个很好的&lt;a href=&quot;http://metalearning-symposium.ml/files/vinyals.pdf&quot;&gt;总结&lt;/a&gt;：&lt;/p&gt;
+
+&lt;table class=&quot;info&quot;&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt; &lt;/th&gt;
+      &lt;th&gt;Model-based&lt;/th&gt;
+      &lt;th&gt;Metric-based&lt;/th&gt;
+      &lt;th&gt;Optimization-based&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;&lt;strong&gt;Key idea&lt;/strong&gt;&lt;/td&gt;
+      &lt;td&gt;RNN; memory&lt;/td&gt;
+      &lt;td&gt;Metric learning&lt;/td&gt;
+      &lt;td&gt;Gradient descent&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;&lt;strong&gt;How &lt;script type=&quot;math/tex&quot;&gt;P_\theta(y \vert \mathbf{x})&lt;/script&gt; is modeled?&lt;/strong&gt;&lt;/td&gt;
+      &lt;td&gt;&lt;script type=&quot;math/tex&quot;&gt;f_\theta(\mathbf{x}, S)&lt;/script&gt;&lt;/td&gt;
+      &lt;td&gt;&lt;script type=&quot;math/tex&quot;&gt;\sum_{(\mathbf{x}_i, y_i) \in S} k_\theta(\mathbf{x}, \mathbf{x}_i)y_i&lt;/script&gt; (*)&lt;/td&gt;
+      &lt;td&gt;&lt;script type=&quot;math/tex&quot;&gt;P_{g_\phi(\theta, S^L)}(y \vert \mathbf{x})&lt;/script&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;(*) &lt;script type=&quot;math/tex&quot;&gt;k_\theta&lt;/script&gt; 是一个衡量 &lt;script type=&quot;math/tex&quot;&gt;\mathbf{x}_i&lt;/script&gt; 和 &lt;script type=&quot;math/tex&quot;&gt;\mathbf{x}&lt;/script&gt; 相似度的kernel function。&lt;/p&gt;
+
+&lt;p&gt;接下来我们会回顾各种方法的经典模型。&lt;/p&gt;
+
+&lt;h2 id=&quot;基于度量的方法&quot;&gt;基于度量的方法&lt;/h2&gt;
+
+&lt;p&gt;基于度量的元学习的核心思想类似于最近邻算法(&lt;a href=&quot;https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm&quot;&gt;k-NN分类&lt;/a&gt;、&lt;a href=&quot;https://en.wikipedia.org/wiki/K-means_clustering&quot;&gt;k-means聚类&lt;/a&gt;)和&lt;a href=&quot;https://en.wikipedia.org/wiki/Kernel_density_estimation&quot;&gt;核密度估计&lt;/a&gt;。该类方法在已知标签的集合上预测出来的概率，是support set中的样本标签的加权和。 权重由核函数（kernal function） &lt;script type=&quot;math/tex&quot;&gt;k_\theta&lt;/script&gt; 算得，该权重代表着两个数据样本之间的相似性。&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;P_\theta(y \vert \mathbf{x}, S) = \sum_{(\mathbf{x}_i, y_i) \in S} k_\theta(\mathbf{x}, \mathbf{x}_i)y_i&lt;/script&gt;
+
+&lt;p&gt;因此，学到一个好的核函数对于基于度量的元学习模型至关重要。&lt;a href=&quot;https://en.wikipedia.org/wiki/Similarity_learning#Metric_learning&quot;&gt;Metric learning&lt;/a&gt;正是针对该问题提出的方法，它的目标就是学到一个不同样本之间的metric或者说是距离函数。任务不同，好的metric的定义也不同。但它一定在任务空间上表示了输入之间的联系，并且能够帮助我们解决问题。&lt;/p&gt;
+
+&lt;p&gt;下面列出的所有方法都显式的学习了输入数据的嵌入向量（embedding vectors），并根据其设计合适的kernel function。&lt;/p&gt;
+
+&lt;h3 id=&quot;convolutional-siamese-neural-network&quot;&gt;Convolutional Siamese Neural Network&lt;/h3&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://papers.nips.cc/paper/769-signature-verification-using-a-siamese-time-delay-neural-network.pdf&quot;&gt;Siamese Neural Network&lt;/a&gt;最早被提出用来解决笔迹验证问题，siamese network由两个孪生网络组成，这两个网络的输出被联合起来训练一个函数，用于学习一对数据输入之间的关系。这两个网络结构相同，共享参数，实际上就是一个网络在学习如何有效地embedding才能显现出一对数据之间的关系。顺便一提，这是LeCun 1994年的论文。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;http://www.cs.toronto.edu/~rsalakhu/papers/oneshot1.pdf&quot;&gt;Koch, Zemel &amp;amp; Salakhutdinov (2015)&lt;/a&gt;提出了一种用siamese网络做one-shot image classification的方法。首先，训练一个用于图片验证的siamese网络，分辨两张图片是否属于同一类。然后在测试时，siamese网络把测试输入和support set里面的所有图片进行比较，选择相似度最高的那张图片所属的类作为输出。&lt;/p&gt;
+
+&lt;p style=&quot;width: 100%;&quot; class=&quot;center&quot;&gt;&lt;img src=&quot;/blog/assets/images/2019-09-19-meta-learning/siamese-conv-net.png&quot; alt=&quot;siamese&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Fig. 2. 卷积siamese网络用于few-shot image classification的例子。&lt;/em&gt;&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;首先，卷积siamese网络学习一个由多个卷积层组成的embedding函数 &lt;script type=&quot;math/tex&quot;&gt;f_\theta&lt;/script&gt; ，把两张图片编码为特征向量。&lt;/li&gt;
+  &lt;li&gt;两个特征向量之间的L1距离可以表示为 &lt;script type=&quot;math/tex&quot;&gt;\vert f_\theta(\mathbf{x}_i) - f_\theta(\mathbf{x}_j) \vert&lt;/script&gt; 。&lt;/li&gt;
+  &lt;li&gt;通过一个linear feedforward layer和sigmoid把距离转换为概率。这就是两张图片属于同一类的概率。&lt;/li&gt;
+  &lt;li&gt;loss函数就是cross entropy loss，因为label是二元的。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;!-- In this way, an efficient image embedding is trained so that the distance between two embeddings is proportional to the similarity between two images. --&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{aligned}
+p(\mathbf{x}_i, \mathbf{x}_j) &amp;= \sigma(\mathbf{W}\vert f_\theta(\mathbf{x}_i) - f_\theta(\mathbf{x}_j) \vert) \\
+\mathcal{L}(B) &amp;= \sum_{(\mathbf{x}_i, \mathbf{x}_j, y_i, y_j)\in B} \mathbf{1}_{y_i=y_j}\log p(\mathbf{x}_i, \mathbf{x}_j) + (1-\mathbf{1}_{y_i=y_j})\log (1-p(\mathbf{x}_i, \mathbf{x}_j))
+\end{aligned} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;Training batch &lt;script type=&quot;math/tex&quot;&gt;B&lt;/script&gt; 可以通过对图片做一些变形增加数据量。你也可以把L1距离替换成其他距离，比如L2距离、cosine距离等等。只要距离是可导的就可以。&lt;/p&gt;
+
+&lt;p&gt;给定一个支持集 &lt;script type=&quot;math/tex&quot;&gt;S&lt;/script&gt; 和一个测试图片 &lt;script type=&quot;math/tex&quot;&gt;\mathbf{x}&lt;/script&gt; ，最终预测的分类为：&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\hat{c}_S(\mathbf{x}) = c(\arg\max_{\mathbf{x}_i \in S} P(\mathbf{x}, \mathbf{x}_i))&lt;/script&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;c(\mathbf{x})&lt;/script&gt; 是图片 &lt;script type=&quot;math/tex&quot;&gt;\mathbf{x}&lt;/script&gt; 的label， &lt;script type=&quot;math/tex&quot;&gt;\hat{c}(.)&lt;/script&gt; 是预测的label。&lt;/p&gt;
+
+&lt;p&gt;这里我们有一个假设：学到的embedding在未见过的分类上依然能很好的衡量图片间的距离。这个假设跟迁移学习中使用预训练模型所隐含的假设是一样的。比如，在ImageNet上预训练的模型，其学到的卷积特征表达方式对于其他图像任务也有帮助。但实际上当新任务与旧任务有所差别的时候，预训练模型的效果就没有那么好了。&lt;/p&gt;
+
+&lt;h3 id=&quot;matching-networks&quot;&gt;Matching Networks&lt;/h3&gt;
+
+&lt;p&gt;&lt;strong&gt;Matching Networks&lt;/strong&gt; (&lt;a href=&quot;http://papers.nips.cc/paper/6385-matching-networks-for-one-shot-learning.pdf&quot;&gt;Vinyals et al., 2016&lt;/a&gt;)的目标是：对于每一个给定的支持集 &lt;script type=&quot;math/tex&quot;&gt;S=\{x_i, y_i\}_{i=1}^k&lt;/script&gt; (&lt;em&gt;k-shot&lt;/em&gt; classification)，分别学一个分类器 &lt;script type=&quot;math/tex&quot;&gt;c_S&lt;/script&gt; 。 这个分类器给出了给定测试样本 &lt;script type=&quot;math/tex&quot;&gt;\mathbf{x}&lt;/script&gt; 时，输出 &lt;script type=&quot;math/tex&quot;&gt;y&lt;/script&gt; 的概率分布。这个分类器的输出被定义为支持集中一系列label的加权和，权重由一个注意力核（attention kernel） &lt;script type=&quot;math/tex&quot;&gt;a(\mathbf{x}, \mathbf{x}_i)&lt;/script&gt; 决定。权重应当与 &lt;script type=&quot;math/tex&quot;&gt;\mathbf{x}&lt;/script&gt; 和 &lt;script type=&quot;math/tex&quot;&gt;\mathbf{x}_i&lt;/script&gt; 间的相似度成正比。&lt;/p&gt;
+
+&lt;p style=&quot;width: 70%;&quot; class=&quot;center&quot;&gt;&lt;img src=&quot;/blog/assets/images/2019-09-19-meta-learning/matching-networks.png&quot; alt=&quot;siamese&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Fig. 3. Matching Networks结构。（图像来源: &lt;a href=&quot;http://papers.nips.cc/paper/6385-matching-networks-for-one-shot-learning.pdf&quot;&gt;原论文&lt;/a&gt;）&lt;/em&gt;&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;c_S(\mathbf{x}) = P(y \vert \mathbf{x}, S) = \sum_{i=1}^k a(\mathbf{x}, \mathbf{x}_i) y_i
+\text{, where }S=\{(\mathbf{x}_i, y_i)\}_{i=1}^k&lt;/script&gt;
+
+&lt;p&gt;Attention kernel由两个embedding function &lt;script type=&quot;math/tex&quot;&gt;f&lt;/script&gt; 和 &lt;script type=&quot;math/tex&quot;&gt;g&lt;/script&gt; 决定。分别用于encoding测试样例和支持集样本。两个样本之间的注意力权重是经过softmax归一化后的，他们embedding vectors的cosine距离 &lt;script type=&quot;math/tex&quot;&gt;\text{cosine}(.)&lt;/script&gt; 。&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;a(\mathbf{x}, \mathbf{x}_i) = \frac{\exp(\text{cosine}(f(\mathbf{x}), g(\mathbf{x}_i))}{\sum_{j=1}^k\exp(\text{cosine}(f(\mathbf{x}), g(\mathbf{x}_j))}&lt;/script&gt;
+
+&lt;h4 id=&quot;simple-embedding&quot;&gt;Simple Embedding&lt;/h4&gt;
+
+&lt;p&gt;在简化版本里，embedding function是一个使用单样本作为输入的神经网络。而且我们可以假设 &lt;script type=&quot;math/tex&quot;&gt;f=g&lt;/script&gt; 。&lt;/p&gt;
+
+&lt;h4 id=&quot;full-context-embeddings&quot;&gt;Full Context Embeddings&lt;/h4&gt;
+
+&lt;p&gt;Embeding vectors对于构建一个好的分类器至关重要。只把一个数据样本作为embedding function的输入，会导致很难高效的估计出整个特征空间。因此，Matching Network模型又进一步发展，通过把整个支持集 &lt;script type=&quot;math/tex&quot;&gt;S&lt;/script&gt; 作为embedding function的额外输入来加强embedding的有效性，相当于给样本添加了语境，让embedding根据样本与支持集中样本的关系进行调整。&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;g_\theta(\mathbf{x}_i, S)&lt;/script&gt; 在整个支持集 &lt;script type=&quot;math/tex&quot;&gt;S&lt;/script&gt; 的语境下用一个双向LSTM来编码 &lt;script type=&quot;math/tex&quot;&gt;\mathbf{x}_i&lt;/script&gt; .&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;f_\theta(\mathbf{x}, S)&lt;/script&gt; 在支持集 &lt;script type=&quot;math/tex&quot;&gt;S&lt;/script&gt; 上使用read attention机制编码测试样本 &lt;script type=&quot;math/tex&quot;&gt;\mathbf{x}&lt;/script&gt; 。&lt;/p&gt;
+    &lt;ol&gt;
+      &lt;li&gt;首先测试样本经过一个简单的神经网络，比如CNN，以抽取基本特征 &lt;script type=&quot;math/tex&quot;&gt;f'(\mathbf{x})&lt;/script&gt; 。&lt;/li&gt;
+      &lt;li&gt;然后，一个带有read attention vector的LSTM被训练用于生成部分hidden state：&lt;br /&gt;
+  &lt;script type=&quot;math/tex&quot;&gt;% &lt;![CDATA[
+\begin{aligned}
+  \hat{\mathbf{h}}_t, \mathbf{c}_t &amp;= \text{LSTM}(f'(\mathbf{x}), [\mathbf{h}_{t-1}, \mathbf{r}_{t-1}], \mathbf{c}_{t-1}) \\
+  \mathbf{h}_t &amp;= \hat{\mathbf{h}}_t + f'(\mathbf{x}) \\
+  \mathbf{r}_{t-1} &amp;= \sum_{i=1}^k a(\mathbf{h}_{t-1}, g(\mathbf{x}_i)) g(\mathbf{x}_i) \\
+  a(\mathbf{h}_{t-1}, g(\mathbf{x}_i)) &amp;= \text{softmax}(\mathbf{h}_{t-1}^\top g(\mathbf{x}_i)) = \frac{\exp(\mathbf{h}_{t-1}^\top g(\mathbf{x}_i))}{\sum_{j=1}^k \exp(\mathbf{h}_{t-1}^\top g(\mathbf{x}_j))}
+  \end{aligned} %]]&gt;&lt;/script&gt;&lt;/li&gt;
+      &lt;li&gt;最终，如果我们做k步的读取 &lt;script type=&quot;math/tex&quot;&gt;f(\mathbf{x}, S)=\mathbf{h}_K&lt;/script&gt; 。&lt;/li&gt;
+    &lt;/ol&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;这类embedding方法被称作“全语境嵌入”（Full Contextual Embeddings）。有意思的是，这类方法对于困难的任务（few-shot classification on mini ImageNet）有所帮助，但对于简单的任务却没有提升（Omniglot）。&lt;/p&gt;
+
+&lt;p&gt;Matching Networks的训练过程与测试时的推理过程是一致的，详情请回顾之前的&lt;a href=&quot;#像测试一样训练&quot;&gt;章节&lt;/a&gt;。值得一提的是，Matching Networks的论文强调了训练和测试的条件应当一致的原则。&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\theta^* = \arg\max_\theta \mathbb{E}_{L\subset\mathcal{L}}[ \mathbb{E}_{S^L \subset\mathcal{D}, B^L \subset\mathcal{D}} [\sum_{(\mathbf{x}, y)\in B^L} P_\theta(y\vert\mathbf{x}, S^L)]]&lt;/script&gt;
+
+&lt;h3 id=&quot;relation-network&quot;&gt;Relation Network&lt;/h3&gt;
+
+&lt;p&gt;&lt;strong&gt;Relation Network (RN)&lt;/strong&gt; (&lt;a href=&quot;http://openaccess.thecvf.com/content_cvpr_2018/papers_backup/Sung_Learning_to_Compare_CVPR_2018_paper.pdf&quot;&gt;Sung et al., 2018&lt;/a&gt;)与&lt;a href=&quot;#convolutional-siamese-neural-network&quot;&gt;siamese network&lt;/a&gt;比较像，但有以下几个不同点：&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;两个样本间的相似系数不是由特征空间的L1距离决定的，而是由一个CNN分类器 &lt;script type=&quot;math/tex&quot;&gt;g_\phi&lt;/script&gt; 预测的。两个样本 &lt;script type=&quot;math/tex&quot;&gt;\mathbf{x}_i&lt;/script&gt; 和 &lt;script type=&quot;math/tex&quot;&gt;\mathbf{x}_j&lt;/script&gt; 间的相似系数为 &lt;script type=&quot;math/tex&quot;&gt;r_{ij} = g_\phi([\mathbf{x}_i, \mathbf{x}_j])&lt;/script&gt; ，其中 &lt;script type=&quot;math/tex&quot;&gt;[.,.]&lt;/script&gt; 代表着concatenation。&lt;/li&gt;
+  &lt;li&gt;目标优化函数是MSE损失，而不是cross-entropy，因为RN在预测时更倾向于把相似系数预测过程作为一个regression问题，而不是二分类问题， &lt;script type=&quot;math/tex&quot;&gt;\mathcal{L}(B) = \sum_{(\mathbf{x}_i, \mathbf{x}_j, y_i, y_j)\in B} (r_{ij} - \mathbf{1}_{y_i=y_j})^2&lt;/script&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p style=&quot;width: 100%;&quot; class=&quot;center&quot;&gt;&lt;img src=&quot;/blog/assets/images/2019-09-19-meta-learning/relation-network.png&quot; alt=&quot;relation-network&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Fig. 4. Relation Network的结构，图中是一个5分类1-shot的例子。(图片来源：&lt;a href=&quot;http://openaccess.thecvf.com/content_cvpr_2018/papers_backup/Sung_Learning_to_Compare_CVPR_2018_paper.pdf&quot;&gt;原论文&lt;/a&gt;)&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;(注意：还有一个&lt;a href=&quot;https://deepmind.com/blog/neural-approach-relational-reasoning/&quot;&gt;Relation Network&lt;/a&gt;是DeepMind提出来用于关系推理的，不要搞混了。)&lt;/p&gt;
+
+&lt;h3 id=&quot;prototypical-networks&quot;&gt;Prototypical Networks&lt;/h3&gt;
+
+&lt;p&gt;&lt;strong&gt;Prototypical Networks&lt;/strong&gt; (&lt;a href=&quot;http://papers.nips.cc/paper/6996-prototypical-networks-for-few-shot-learning.pdf&quot;&gt;Snell, Swersky &amp;amp; Zemel, 2017&lt;/a&gt;)用一个嵌入函数 &lt;script type=&quot;math/tex&quot;&gt;f_\theta&lt;/script&gt; 把每个输入编码为一个M维特征向量。然后对每一类 &lt;script type=&quot;math/tex&quot;&gt;c \in \mathcal{C}&lt;/script&gt; ，取所有支持集样本的特征向量的平均值作为这个类的prototype特征。&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\mathbf{v}_c = \frac{1}{|S_c|} \sum_{(\mathbf{x}_i, y_i) \in S_c} f_\theta(\mathbf{x}_i)&lt;/script&gt;
+
+&lt;p style=&quot;width: 100%;&quot; class=&quot;center&quot;&gt;&lt;img src=&quot;/blog/assets/images/2019-09-19-meta-learning/prototypical-networks.png&quot; alt=&quot;prototypical-networks&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Fig. 5. 在少样本学习和无样本学习中的Prototypical networks。(图像来源：&lt;a href=&quot;http://papers.nips.cc/paper/6996-prototypical-networks-for-few-shot-learning.pdf&quot;&gt;原论文&lt;/a&gt;)&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;测试样本属于各类的概率分布由特征向量和prototype向量的距离取负后通过softmanx得到。&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;P(y=c\vert\mathbf{x})=\text{softmax}(-d_\varphi(f_\theta(\mathbf{x}), \mathbf{v}_c)) = \frac{\exp(-d_\varphi(f_\theta(\mathbf{x}), \mathbf{v}_c))}{\sum_{c' \in \mathcal{C}}\exp(-d_\varphi(f_\theta(\mathbf{x}), \mathbf{v}_{c'}))}&lt;/script&gt;
+
+&lt;p&gt;其中 &lt;script type=&quot;math/tex&quot;&gt;d_\varphi&lt;/script&gt; 可以是任意距离函数，只要 &lt;script type=&quot;math/tex&quot;&gt;\varphi&lt;/script&gt; 可导即可。这篇文章中，他们使用了平方欧氏距离。&lt;/p&gt;
+
+&lt;p&gt;损失函数用的是负对数似然: &lt;script type=&quot;math/tex&quot;&gt;\mathcal{L}(\theta) = -\log P_\theta(y=c\vert\mathbf{x})&lt;/script&gt; .&lt;/p&gt;
+
+&lt;h2 id=&quot;基于模型的方法&quot;&gt;基于模型的方法&lt;/h2&gt;
+
+&lt;p&gt;基于模型的元学习方法不对 &lt;script type=&quot;math/tex&quot;&gt;P_\theta(y\vert\mathbf{x})&lt;/script&gt; 作出任何假设。 &lt;script type=&quot;math/tex&quot;&gt;P_\theta(y\vert\mathbf{x})&lt;/script&gt; 是由一个专门用来快速学习的模型生成的，快速学习指的是这个模型可以根据少量的训练快速更新参数。有两种方式可以实现快速学习，1.设计好模型的内部架构使其能够快速学习，2.用另外一个模型来生成快速学习模型的参数。&lt;/p&gt;
+
+&lt;h3 id=&quot;memory-augmented-neural-networks&quot;&gt;Memory-Augmented Neural Networks&lt;/h3&gt;
+
+&lt;p&gt;许多模型架构使用了外部储存来帮助神经网络学习，像是&lt;a href=&quot;https://lilianweng.github.io/lil-log/2018/06/24/attention-attention.html#neural-turing-machines&quot;&gt;Neural Turing Machines&lt;/a&gt;和&lt;a href=&quot;https://arxiv.org/abs/1410.3916&quot;&gt;Memory Networks&lt;/a&gt;。使用外部存储，让神经网络能够更容易的学到新知识并提供给以后使用。这样的模型被称为&lt;strong&gt;MANN&lt;/strong&gt;（”&lt;strong&gt;Memory-Augmented Neural Network&lt;/strong&gt;“）。注意，只使用了&lt;em&gt;内部存储&lt;/em&gt;的循环神经网络并不是MANN，比如RNN、LSTM。&lt;/p&gt;
+
+&lt;p&gt;MANN的目的是在仅给定几个训练样本的情况下，快速编码新的信息并适应新的任务，因此MANN非常适合用于元学习。&lt;a href=&quot;http://proceedings.mlr.press/v48/santoro16.pdf&quot;&gt;Santoro et al. (2016)&lt;/a&gt;以Neural Turing Machine（NTM）为基础，对训练和存储读写机制（也称为“寻址机制”，即如何对存储向量分配注意力权重）做了一系列的修改。如果你对NTM或寻址机制不太熟悉的话，可以参见原作者之前博文中的&lt;a href=&quot;https://lilianweng.github.io/lil-log/2018/06/24/attention-attention.html#neural-turing-machines&quot;&gt;NTM介绍&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;简要回顾一下，NTM由一个控制器神经网络和存储器组成。控制器学习如何通过软注意力（soft attention）读写存储器，而存储器相当于是一个知识库。注意力权重是由寻址机制生成的，由询问的内容和位置共同决定。&lt;/p&gt;
+
+&lt;p style=&quot;width: 70%;&quot; class=&quot;center&quot;&gt;&lt;img src=&quot;/blog/assets/images/2019-09-19-meta-learning/NTM.png&quot; alt=&quot;NTM&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Fig. 6. NTM的架构，t时刻的存储， &lt;script type=&quot;math/tex&quot;&gt;\mathbf{M}_t&lt;/script&gt; 是一个大小为 &lt;script type=&quot;math/tex&quot;&gt;N \times M&lt;/script&gt; 的矩阵，代表着N个M维的向量，每个向量是一条记录&lt;/em&gt;&lt;/p&gt;
+
+&lt;h4 id=&quot;mann-for-meta-learning&quot;&gt;MANN for Meta-Learning&lt;/h4&gt;
+
+&lt;p&gt;为了在元学习中使用MANN，我们需要训练这个网络使得它能够快速提炼新任务的信息，而且能够快速稳定的查询之前存储的特征。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;http://proceedings.mlr.press/v48/santoro16.pdf&quot;&gt;Santoro et al., 2016&lt;/a&gt;提出了一种有意思的训练方式，他们强迫存储器保留当前样本的信息直到对应的标签出现。在每个episode中，标签有 &lt;script type=&quot;math/tex&quot;&gt;一步的延迟&lt;/script&gt; ，即每次给出的训练对为 &lt;script type=&quot;math/tex&quot;&gt;(\mathbf{x}_{t+1}, y_t)&lt;/script&gt; 。&lt;/p&gt;
+
+&lt;p style=&quot;width: 100%;&quot; class=&quot;center&quot;&gt;&lt;img src=&quot;/blog/assets/images/2019-09-19-meta-learning/mann-meta-learning.png&quot; alt=&quot;NTM&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Fig. 7. MANN在元学习中的任务设置（图像来源：&lt;a href=&quot;http://proceedings.mlr.press/v48/santoro16.pdf&quot;&gt;原论文&lt;/a&gt;）。&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;通过这种设定，MANN会学到要记住新数据集的信息，因为存储器需要保留着当前输入的信息，并且在对应的标签出现的时候取回之前存储的信息进行预测。&lt;/p&gt;
+
+&lt;p&gt;接下来，我们看看存储器是完成信息的存储和取回的。&lt;/p&gt;
+
+&lt;h4 id=&quot;addressing-mechanism-for-meta-learning&quot;&gt;Addressing Mechanism for Meta-Learning&lt;/h4&gt;
+
+&lt;p&gt;为了让模型更加适应元学习，除了改变训练过程，作者还增加了一个完全基于内容的寻址机制。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;» 如何从存储器中取回信息?&lt;/strong&gt;
+&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;读取注意力（read attention）完全由内容相似度决定。&lt;/p&gt;
+
+&lt;p&gt;首先，根据t时刻的输入 &lt;script type=&quot;math/tex&quot;&gt;\mathbf{x}&lt;/script&gt; ，控制器生成一个键值特征向量 &lt;script type=&quot;math/tex&quot;&gt;\mathbf{k}_t&lt;/script&gt; 。然后用类似于NTM的方法，计算键值特征向量和存储器中每个向量的cosine距离，经过softmax归一化，得到一个读取权重向量 &lt;script type=&quot;math/tex&quot;&gt;\mathbf{w}_t^r&lt;/script&gt; 。读取向量 &lt;script type=&quot;math/tex&quot;&gt;\mathbf{r}_t&lt;/script&gt; 是对存储器中所有向量的加权和：&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\mathbf{r}_i = \sum_{i=1}^N w_t^r(i)\mathbf{M}_t(i)
+\text{, where } w_t^r(i) = \text{softmax}(\frac{\mathbf{k}_t \cdot \mathbf{M}_t(i)}{\|\mathbf{k}_t\| \cdot \|\mathbf{M}_t(i)\|})&lt;/script&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;M_t&lt;/script&gt; 是t时刻的存储器矩阵， &lt;script type=&quot;math/tex&quot;&gt;M_t(i)&lt;/script&gt; 是该矩阵中的第i行，即第i个向量。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;» 如何往存储器中写入信息?&lt;/strong&gt;
+&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;写入新信息的寻址机制跟&lt;a href=&quot;https://en.wikipedia.org/wiki/Cache_replacement_policies&quot;&gt;缓存置换机制&lt;/a&gt;很像。为了更好的适应元学习的任务，MANN使用的是&lt;strong&gt;最近最少使用算法(Least Recently Used Access, LRUA)&lt;/strong&gt;。LRUA算法会优先覆盖&lt;em&gt;最少&lt;/em&gt;使用的，或者&lt;em&gt;最近&lt;/em&gt;刚用过的存储位置。&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;最少使用的位置：目的是保存经常使用的那些信息(参见&lt;a href=&quot;https://en.wikipedia.org/wiki/Least_frequently_used&quot;&gt;LFU&lt;/a&gt;);&lt;/li&gt;
+  &lt;li&gt;最近使用的位置：原因是刚用过的信息很有可能不会马上用到(参见&lt;a href=&quot;https://en.wikipedia.org/wiki/Cache_replacement_policies#Most_recently_used_(MRU)&quot;&gt;MRU&lt;/a&gt;).&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;除了LRUA，还有许多其他的缓存置换算法。根据场景的不同，其他的算法可能有更好的表现。另外相比于人为指定一种缓存替换机制，根据存储使用的规律，学出一套寻址策略可能效果更好。&lt;/p&gt;
+
+&lt;p&gt;这里的LRUA以一种所有运算都可微分的方式实现：&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;t时刻的使用权重 &lt;script type=&quot;math/tex&quot;&gt;\mathbf{w}^u_t&lt;/script&gt; 是当前读写向量的和，再加上上一时刻的使用权重 &lt;script type=&quot;math/tex&quot;&gt;\gamma \mathbf{w}^u_{t-1}&lt;/script&gt; ， &lt;script type=&quot;math/tex&quot;&gt;\gamma&lt;/script&gt; 是一个衰减系数。&lt;/li&gt;
+  &lt;li&gt;写入向量由之前的读取权重（代表着最近使用的位置）和之前的最少使用权重（代表着最少使用的位置）插值得到。插值参数是超参数 &lt;script type=&quot;math/tex&quot;&gt;\alpha&lt;/script&gt; 的sigmoid。&lt;/li&gt;
+  &lt;li&gt;最少使用权重 &lt;script type=&quot;math/tex&quot;&gt;\mathbf{w}_t^{lu}&lt;/script&gt; 由使用权重 &lt;script type=&quot;math/tex&quot;&gt;\mathbf{w}_t^u&lt;/script&gt; 二值化得到。首先选取 &lt;script type=&quot;math/tex&quot;&gt;\mathbf{w}_t^u&lt;/script&gt; 第n小的元素，找出 &lt;script type=&quot;math/tex&quot;&gt;\mathbf{w}_t^u&lt;/script&gt; 中所有比这个元素小的元素，对应的位置在 &lt;script type=&quot;math/tex&quot;&gt;\mathbf{w}_t^{lu}&lt;/script&gt; 中设为1，反之则设为0。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{aligned}
+\mathbf{w}_t^u &amp;= \gamma \mathbf{w}_{t-1}^u + \mathbf{w}_t^r + \mathbf{w}_t^w \\
+\mathbf{w}_t^r &amp;= \text{softmax}(\text{cosine}(\mathbf{k}_t, \mathbf{M}_t(i))) \\
+\mathbf{w}_t^w &amp;= \sigma(\alpha)\mathbf{w}_{t-1}^r + (1-\sigma(\alpha))\mathbf{w}^{lu}_{t-1}\\
+\mathbf{w}_t^{lu} &amp;= \mathbf{1}_{w_t^u(i) \leq m(\mathbf{w}_t^u, n)}
+\text{, where }m(\mathbf{w}_t^u, n)\text{ is the }n\text{-th smallest element in vector }\mathbf{w}_t^u\text{.}
+\end{aligned} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;最后，在把 &lt;script type=&quot;math/tex&quot;&gt;\mathbf{w}_t^{lu}&lt;/script&gt; 代表着的最近使用存储设为0以后，更新每个存储向量：
+ &lt;script type=&quot;math/tex&quot;&gt;\mathbf{M}_t(i) = \mathbf{M}_{t-1}(i) + w_t^w(i)\mathbf{k}_t, \forall i&lt;/script&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;meta-networks&quot;&gt;Meta Networks&lt;/h3&gt;
+
+&lt;p&gt;&lt;strong&gt;Meta Networks&lt;/strong&gt; (&lt;a href=&quot;https://arxiv.org/abs/1703.00837&quot;&gt;Munkhdalai &amp;amp; Yu, 2017&lt;/a&gt;)，简称&lt;strong&gt;MetaNet&lt;/strong&gt;，是一个专门针对多任务间&lt;em&gt;快速&lt;/em&gt;泛化设计的元学习模型，模型结构和训练过程都经过了调整。&lt;/p&gt;
+
+&lt;h4 id=&quot;fast-weights&quot;&gt;Fast Weights&lt;/h4&gt;
+
+&lt;p&gt;MetaNet的快速泛化能力依赖于“快参数（fast weights）”。有许多论文涉及这个话题，但我还没把他们全都仔细读过，没能找到一个具体的定义，只有一些模糊的共识。一般神经网络的权重是根据目标函数进行随机梯度下降更新的，但这个过程很慢。一种更快的学习方法是利用另外一个神经网络，预测当前神经网络的参数，预测出来的参数被称为&lt;em&gt;快参数&lt;/em&gt;。而普通SGD生成的权重则被称为&lt;em&gt;慢参数&lt;/em&gt;。&lt;/p&gt;
+
+&lt;p&gt;在MetaNet中，损失梯度作为&lt;em&gt;元信息&lt;/em&gt;，被用于生产学习快参数的模型。慢参数和快参数在神经网络中被结合起来用于预测。快参数是针对任务进行优化产生的参数，使用快参数相当于针对当前的任务进行了优化。&lt;/p&gt;
+
+&lt;p style=&quot;width: 50%;&quot; class=&quot;center&quot;&gt;&lt;img src=&quot;/blog/assets/images/2019-09-19-meta-learning/combine-slow-fast-weights.png&quot; alt=&quot;slow-fast-weights&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Fig. 8. 结合了慢参数和快参数的MLP。 &lt;script type=&quot;math/tex&quot;&gt;\bigoplus&lt;/script&gt; is element-wise sum. (图像来源：&lt;a href=&quot;https://arxiv.org/abs/1703.00837&quot;&gt;原论文&lt;/a&gt;).&lt;/em&gt;&lt;/p&gt;
+
+&lt;h4 id=&quot;model-components&quot;&gt;Model Components&lt;/h4&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;免责声明：下面的部分与原始论文有所不同。在我看来，这篇文章的想法很有趣，但写的不太好，所以我想用自己的语言来介绍这篇文章。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;MetaNet的关键组件是：&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;f_\theta&lt;/script&gt; ：一个由 &lt;script type=&quot;math/tex&quot;&gt;\theta&lt;/script&gt; 决定的编码函数，发挥着元学习器的作用。负责把原始输入编码为特征向量。类似&lt;a href=&quot;#convolutional-siamese-neural-network&quot;&gt;Siamese Neural Network&lt;/a&gt;，我们希望训练这个编码函数使得能够根据其生成的特征向量判断两个输入是否属于同一类（验证任务）。&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;g_\phi&lt;/script&gt; ：一个由 &lt;script type=&quot;math/tex&quot;&gt;\phi&lt;/script&gt; 决定的基学习器，负责完成真正的学习任务。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;如果我们就此打住的话，这基本就是&lt;a href=&quot;#relation-network&quot;&gt;Relation Network&lt;/a&gt;。
+但MetaNet，给这两个模型额外增加了快参数（参加Fig. 8）。&lt;/p&gt;
+
+&lt;p&gt;因此，我们需要额外两个模型，分别用于生成 &lt;script type=&quot;math/tex&quot;&gt;f&lt;/script&gt; 和 &lt;script type=&quot;math/tex&quot;&gt;g&lt;/script&gt; 的快参数。&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;F_w&lt;/script&gt; ：一个由 &lt;script type=&quot;math/tex&quot;&gt;w&lt;/script&gt; 决定的LSTM，用于学习嵌入函数 &lt;script type=&quot;math/tex&quot;&gt;f&lt;/script&gt; 的快参数 &lt;script type=&quot;math/tex&quot;&gt;\theta^+&lt;/script&gt; 。它把 &lt;script type=&quot;math/tex&quot;&gt;f&lt;/script&gt; 在验证任务上的loss梯度作为输入。&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;G_v&lt;/script&gt; ：一个由 &lt;script type=&quot;math/tex&quot;&gt;v&lt;/script&gt; 决定的神经网络，根据基学习器 &lt;script type=&quot;math/tex&quot;&gt;g&lt;/script&gt; 的loss梯度学习其快参数 &lt;script type=&quot;math/tex&quot;&gt;\phi^+&lt;/script&gt; 。在MetaNet中，学习器的loss梯度被视作任务的&lt;em&gt;元信息&lt;/em&gt;。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;现在我们来看看MetaNet是怎么训练的。训练数据包含许多对数据集。一个支持集 &lt;script type=&quot;math/tex&quot;&gt;S=\{\mathbf{x}'_i, y'_i\}_{i=1}^K&lt;/script&gt; 和一个测试集 &lt;script type=&quot;math/tex&quot;&gt;U=\{\mathbf{x}_i, y_i\}_{i=1}^L&lt;/script&gt; 。我们有四个模型和四个模型参数集 &lt;script type=&quot;math/tex&quot;&gt;(\theta, \phi, w, v)&lt;/script&gt; 要学。&lt;/p&gt;
+
+&lt;p style=&quot;width: 90%;&quot; class=&quot;center&quot;&gt;&lt;img src=&quot;/blog/assets/images/2019-09-19-meta-learning/meta-network.png&quot; alt=&quot;meta-net&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Fig.9. MetaNet的结构。&lt;/em&gt;&lt;/p&gt;
+
+&lt;h4 id=&quot;训练过程&quot;&gt;训练过程&lt;/h4&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;从支持集 &lt;script type=&quot;math/tex&quot;&gt;S&lt;/script&gt; 中随机采样一对输入， &lt;script type=&quot;math/tex&quot;&gt;(\mathbf{x}'_i, y'_i)&lt;/script&gt; 和 &lt;script type=&quot;math/tex&quot;&gt;(\mathbf{x}'_j, y_j)&lt;/script&gt; 。令 &lt;script type=&quot;math/tex&quot;&gt;\mathbf{x}_{(t,1)}=\mathbf{x}'_i&lt;/script&gt; ， &lt;script type=&quot;math/tex&quot;&gt;\mathbf{x}_{(t,2)}=\mathbf{x}'_j&lt;/script&gt; .&lt;br /&gt;
+for &lt;script type=&quot;math/tex&quot;&gt;t = 1, \dots, K&lt;/script&gt; :
+    &lt;ul&gt;
+      &lt;li&gt;a. 计算编码函数的loss，即验证任务上的交叉熵&lt;br /&gt;
+&lt;script type=&quot;math/tex&quot;&gt;\mathcal{L}^\text{emb}_t = \mathbf{1}_{y'_i=y'_j} \log P_t + (1 - \mathbf{1}_{y'_i=y'_j})\log(1 - P_t)\text{, where }P_t = \sigma(\mathbf{W}\vert f_\theta(\mathbf{x}_{(t,1)}) - f_\theta(\mathbf{x}_{(t,2)})\vert)&lt;/script&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;根据编码函数的loss计算任务级别的快参数:
+ &lt;script type=&quot;math/tex&quot;&gt;\theta^+ = F_w(\nabla_\theta \mathcal{L}^\text{emb}_1, \dots, \mathcal{L}^\text{emb}_T)&lt;/script&gt;&lt;/li&gt;
+  &lt;li&gt;接下来遍历支持集 &lt;script type=&quot;math/tex&quot;&gt;S&lt;/script&gt; 中的样本，计算样本级别的快参数&lt;br /&gt;
+for &lt;script type=&quot;math/tex&quot;&gt;i=1, \dots, K&lt;/script&gt; :
+    &lt;ul&gt;
+      &lt;li&gt;a. 基学习器输出一个概率分布： &lt;script type=&quot;math/tex&quot;&gt;P(\hat{y}_i \vert \mathbf{x}_i) = g_\phi(\mathbf{x}_i)&lt;/script&gt; ，loss可以用交叉熵或者MSE: &lt;script type=&quot;math/tex&quot;&gt;\mathcal{L}^\text{task}_i = y'_i \log g_\phi(\mathbf{x}'_i) + (1- y'_i) \log (1 - g_\phi(\mathbf{x}'_i))&lt;/script&gt;&lt;/li&gt;
+      &lt;li&gt;b. 提取任务的元信息（loss的梯度）并计算样本级别的快参数:
+&lt;script type=&quot;math/tex&quot;&gt;\phi_i^+ = G_v(\nabla_\phi\mathcal{L}^\text{task}_i)&lt;/script&gt;
+        &lt;ul&gt;
+          &lt;li&gt;把 &lt;script type=&quot;math/tex&quot;&gt;\phi^+_i&lt;/script&gt; 放在“值”存储器 &lt;script type=&quot;math/tex&quot;&gt;\mathbf{M}&lt;/script&gt; 的第 &lt;script type=&quot;math/tex&quot;&gt;i&lt;/script&gt; 个位置。&lt;br /&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/li&gt;
+      &lt;li&gt;d. 编码器结合慢参数和快参数对支持集中的样本进行编码： &lt;script type=&quot;math/tex&quot;&gt;r'_i = f_{\theta, \theta^+}(\mathbf{x}'_i)&lt;/script&gt;
+        &lt;ul&gt;
+          &lt;li&gt;把 &lt;script type=&quot;math/tex&quot;&gt;r'_i&lt;/script&gt; 放在“键”存储器 &lt;script type=&quot;math/tex&quot;&gt;\mathbf{R}&lt;/script&gt; 的第 &lt;script type=&quot;math/tex&quot;&gt;i&lt;/script&gt; 个位置。&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;最后就是要来根据测试集 &lt;script type=&quot;math/tex&quot;&gt;U=\{\mathbf{x}_i, y_i\}_{i=1}^L&lt;/script&gt; 来构建训练的loss了。注意，在这一步中，我们不使用 &lt;script type=&quot;math/tex&quot;&gt;F_w&lt;/script&gt; 和 &lt;script type=&quot;math/tex&quot;&gt;G_v&lt;/script&gt; 计算快参数。编码器的快参数保持不变，而基学习器的快参数则根据查询存储器得到。&lt;br /&gt;
+从 &lt;script type=&quot;math/tex&quot;&gt;\mathcal{L}_\text{train}=0&lt;/script&gt; 开始：&lt;br /&gt;
+for &lt;script type=&quot;math/tex&quot;&gt;j=1, \dots, L&lt;/script&gt; :
+    &lt;ul&gt;
+      &lt;li&gt;a. 使用编码器结合慢参数和之前得到的快参数对测试样例进行编码：
+&lt;script type=&quot;math/tex&quot;&gt;r_j = f_{\theta, \theta^+}(\mathbf{x}_j)&lt;/script&gt;&lt;/li&gt;
+      &lt;li&gt;b. 运用注意力机制，查找编码得到的 &lt;script type=&quot;math/tex&quot;&gt;r_j&lt;/script&gt; 在“键”存储器 &lt;script type=&quot;math/tex&quot;&gt;\mathbf{R}&lt;/script&gt; 的位置，然后拿出对应位置“值”存储器 &lt;script type=&quot;math/tex&quot;&gt;\mathbf{M}&lt;/script&gt; 对应位置的快参数，组合成当前测试样本对应的基学习器快参数。注意力函数可以随便选，MetaNet用的是cosine距离&lt;br /&gt;
+  &lt;script type=&quot;math/tex&quot;&gt;% &lt;![CDATA[
+\begin{aligned}
+ a_j &amp;= \text{cosine}(\mathbf{R}, r_j) = [\frac{r'_1\cdot r_j}{\|r'_1\|\cdot\|r_j\|}, \dots, \frac{r'_N\cdot r_j}{\|r'_N\|\cdot\|r_j\|}]\\
+ \phi^+_j &amp;= \text{softmax}(a_j)^\top \mathbf{M}
+ \end{aligned} %]]&gt;&lt;/script&gt;&lt;/li&gt;
+      &lt;li&gt;c. 更新训练loss： &lt;script type=&quot;math/tex&quot;&gt;\mathcal{L}_\text{train} \leftarrow \mathcal{L}_\text{train} + \mathcal{L}^\text{task}(g_{\phi, \phi^+}(\mathbf{x}_i), y_i)&lt;/script&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;根据 &lt;script type=&quot;math/tex&quot;&gt;\mathcal{L}_\text{train}&lt;/script&gt; 更新所有参数 &lt;script type=&quot;math/tex&quot;&gt;(\theta, \phi, w, v)&lt;/script&gt; .&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&quot;optimization-based&quot;&gt;Optimization-Based&lt;/h2&gt;
+
+&lt;p&gt;Deep learning models learn through backpropagation of gradients. However, the gradient-based optimization is neither designed to cope with a small number of training samples, nor to converge within a small number of optimization steps. Is there a way to adjust the optimization algorithm so that the model can be good at learning with a few examples? This is what optimization-based approach meta-learning algorithms intend for.&lt;/p&gt;
+
+&lt;h3 id=&quot;lstm-meta-learner&quot;&gt;LSTM Meta-Learner&lt;/h3&gt;
+
+&lt;p&gt;The optimization algorithm can be explicitly modeled. &lt;a href=&quot;https://openreview.net/pdf?id=rJY0-Kcll&quot;&gt;Ravi &amp;amp; Larochelle (2017)&lt;/a&gt; did so and named it “meta-learner”, while the original model for handling the task is called “learner”. The goal of the meta-learner is to efficiently update the learner’s parameters using a small support set so that the learner can adapt to the new task quickly.&lt;/p&gt;
+
+&lt;p&gt;Let’s denote the learner model as &lt;script type=&quot;math/tex&quot;&gt;M_\theta&lt;/script&gt; parameterized by &lt;script type=&quot;math/tex&quot;&gt;\theta&lt;/script&gt; , the meta-learner as &lt;script type=&quot;math/tex&quot;&gt;R_\Theta&lt;/script&gt; with parameters &lt;script type=&quot;math/tex&quot;&gt;\Theta&lt;/script&gt; , and the loss function &lt;script type=&quot;math/tex&quot;&gt;\mathcal{L}&lt;/script&gt; .&lt;/p&gt;
+
+&lt;h4 id=&quot;why-lstm&quot;&gt;Why LSTM?&lt;/h4&gt;
+
+&lt;p&gt;The meta-learner is modeled as a LSTM, because:&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;There is similarity between the gradient-based update in backpropagation and the cell-state update in LSTM.&lt;/li&gt;
+  &lt;li&gt;Knowing a history of gradients benefits the gradient update; think about how &lt;a href=&quot;http://ruder.io/optimizing-gradient-descent/index.html#momentum&quot;&gt;momentum&lt;/a&gt; works.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;The update for the learner’s parameters at time step t with a learning rate &lt;script type=&quot;math/tex&quot;&gt;\alpha_t&lt;/script&gt; is:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\theta_t = \theta_{t-1} - \alpha_t \nabla_{\theta_{t-1}}\mathcal{L}_t&lt;/script&gt;
+
+&lt;p&gt;It has the same form as the cell state update in LSTM, if we set forget gate &lt;script type=&quot;math/tex&quot;&gt;f_t=1&lt;/script&gt; , input gate &lt;script type=&quot;math/tex&quot;&gt;i_t = \alpha_t&lt;/script&gt; , cell state &lt;script type=&quot;math/tex&quot;&gt;c_t = \theta_t&lt;/script&gt; , and new cell state &lt;script type=&quot;math/tex&quot;&gt;\tilde{c}_t = -\nabla_{\theta_{t-1}}\mathcal{L}_t&lt;/script&gt; :&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{aligned}
+c_t &amp;= f_t \odot c_{t-1} + i_t \odot \tilde{c}_t\\
+    &amp;= \theta_{t-1} - \alpha_t\nabla_{\theta_{t-1}}\mathcal{L}_t
+\end{aligned} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;While fixing &lt;script type=&quot;math/tex&quot;&gt;f_t=1&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;i_t=\alpha_t&lt;/script&gt; might not be the optimal, both of them can be learnable and adaptable to different datasets.&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{aligned}
+f_t &amp;= \sigma(\mathbf{W}_f \cdot [\nabla_{\theta_{t-1}}\mathcal{L}_t, \mathcal{L}_t, \theta_{t-1}, f_{t-1}] + \mathbf{b}_f) &amp; \scriptstyle{\text{; how much to forget the old value of parameters.}}\\
+i_t &amp;= \sigma(\mathbf{W}_i \cdot [\nabla_{\theta_{t-1}}\mathcal{L}_t, \mathcal{L}_t, \theta_{t-1}, i_{t-1}] + \mathbf{b}_i) &amp; \scriptstyle{\text{; corresponding to the learning rate at time step t.}}\\
+\tilde{\theta}_t &amp;= -\nabla_{\theta_{t-1}}\mathcal{L}_t &amp;\\
+\theta_t &amp;= f_t \odot \theta_{t-1} + i_t \odot \tilde{\theta}_t &amp;\\
+\end{aligned} %]]&gt;&lt;/script&gt;
+
+&lt;h4 id=&quot;model-setup&quot;&gt;Model Setup&lt;/h4&gt;
+
+&lt;p style=&quot;width: 100%;&quot; class=&quot;center&quot;&gt;&lt;img src=&quot;/blog/assets/images/2019-09-19-meta-learning/lstm-meta-learner.png&quot; alt=&quot;lstm-meta-learner&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Fig.10. How the learner &lt;script type=&quot;math/tex&quot;&gt;M_\theta&lt;/script&gt; and the meta-learner &lt;script type=&quot;math/tex&quot;&gt;R_\Theta&lt;/script&gt; are trained. (图像来源：&lt;a href=&quot;https://openreview.net/pdf?id=rJY0-Kcll&quot;&gt;原论文&lt;/a&gt; with more annotations)&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;The training process mimics what happens during test, since it has been proved to be beneficial in &lt;a href=&quot;#matching-networks&quot;&gt;Matching Networks&lt;/a&gt;. During each training epoch, we first sample a dataset &lt;script type=&quot;math/tex&quot;&gt;\mathcal{D} = (\mathcal{D}_\text{train}, \mathcal{D}_\text{test}) \in \hat{\mathcal{D}}_\text{meta-train}&lt;/script&gt; and then sample mini-batches out of &lt;script type=&quot;math/tex&quot;&gt;\mathcal{D}_\text{train}&lt;/script&gt; to update &lt;script type=&quot;math/tex&quot;&gt;\theta&lt;/script&gt; for &lt;script type=&quot;math/tex&quot;&gt;T&lt;/script&gt; rounds. The final state of the learner parameter &lt;script type=&quot;math/tex&quot;&gt;\theta_T&lt;/script&gt; is used to train the meta-learner on the test data &lt;script type=&quot;math/tex&quot;&gt;\mathcal{D}_\text{test}&lt;/script&gt; .&lt;/p&gt;
+
+&lt;p&gt;Two implementation details to pay extra attention to:&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;How to compress the parameter space in LSTM meta-learner? As the meta-learner is modeling parameters of another neural network, it would have hundreds of thousands of variables to learn. Following the &lt;a href=&quot;https://arxiv.org/abs/1606.04474&quot;&gt;idea&lt;/a&gt; of sharing parameters across coordinates,&lt;/li&gt;
+  &lt;li&gt;To simplify the training process, the meta-learner assumes that the loss &lt;script type=&quot;math/tex&quot;&gt;\mathcal{L}_t&lt;/script&gt; and the gradient &lt;script type=&quot;math/tex&quot;&gt;\nabla_{\theta_{t-1}} \mathcal{L}_t&lt;/script&gt; are independent.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p style=&quot;width: 100%;&quot; class=&quot;center&quot;&gt;&lt;img src=&quot;/blog/assets/images/2019-09-19-meta-learning/train-meta-learner.png&quot; alt=&quot;train-meta-learner&quot; /&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;maml&quot;&gt;MAML&lt;/h3&gt;
+
+&lt;p&gt;&lt;strong&gt;MAML&lt;/strong&gt;, short for &lt;strong&gt;Model-Agnostic Meta-Learning&lt;/strong&gt; (&lt;a href=&quot;https://arxiv.org/abs/1703.03400&quot;&gt;Finn, et al. 2017&lt;/a&gt;) is a fairly general optimization algorithm, compatible with any model that learns through gradient descent.&lt;/p&gt;
+
+&lt;p&gt;Let’s say our model is &lt;script type=&quot;math/tex&quot;&gt;f_\theta&lt;/script&gt; with parameters &lt;script type=&quot;math/tex&quot;&gt;\theta&lt;/script&gt; . Given a task &lt;script type=&quot;math/tex&quot;&gt;\tau_i&lt;/script&gt; and its associated dataset &lt;script type=&quot;math/tex&quot;&gt;(\mathcal{D}^{(i)}_\text{train}, \mathcal{D}^{(i)}_\text{test})&lt;/script&gt; , we can update the model parameters by one or more gradient descent steps (the following example only contains one step):&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\theta'_i = \theta - \alpha \nabla_\theta\mathcal{L}^{(0)}_{\tau_i}(f_\theta)&lt;/script&gt;
+
+&lt;p&gt;where &lt;script type=&quot;math/tex&quot;&gt;\mathcal{L}^{(0)}&lt;/script&gt; is the loss computed using the mini data batch with id (0).&lt;/p&gt;
+
+&lt;p style=&quot;width: 45%;&quot; class=&quot;center&quot;&gt;&lt;img src=&quot;/blog/assets/images/2019-09-19-meta-learning/maml.png&quot; alt=&quot;MAML&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Fig. 11. Diagram of MAML. (图像来源：&lt;a href=&quot;https://arxiv.org/abs/1703.03400&quot;&gt;原论文&lt;/a&gt;)&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;Well, the above formula only optimizes for one task. To achieve a good generalization across a variety of tasks, we would like to find the optimal &lt;script type=&quot;math/tex&quot;&gt;\theta^*&lt;/script&gt; so that the task-specific fine-tuning is more efficient. Now, we sample a new data batch with id (1) for updating the meta-objective. The loss, denoted as &lt;script type=&quot;math/tex&quot;&gt;\mathcal{L}^{(1)}&lt;/script&gt; , depends on the mini batch (1). The superscripts in &lt;script type=&quot;math/tex&quot;&gt;\mathcal{L}^{(0)}&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;\mathcal{L}^{(1)}&lt;/script&gt; only indicate different data batches, and they refer to the same loss objective for the same task.&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{aligned}
+\theta^* 
+&amp;= \arg\min_\theta \sum_{\tau_i \sim p(\tau)} \mathcal{L}_{\tau_i}^{(1)} (f_{\theta'_i}) = \arg\min_\theta \sum_{\tau_i \sim p(\tau)} \mathcal{L}_{\tau_i}^{(1)} (f_{\theta - \alpha\nabla_\theta \mathcal{L}_{\tau_i}^{(0)}(f_\theta)}) &amp; \\
+\theta &amp;\leftarrow \theta - \beta \nabla_{\theta} \sum_{\tau_i \sim p(\tau)} \mathcal{L}_{\tau_i}^{(1)} (f_{\theta - \alpha\nabla_\theta \mathcal{L}_{\tau_i}^{(0)}(f_\theta)}) &amp; \scriptstyle{\text{; updating rule}}
+\end{aligned} %]]&gt;&lt;/script&gt;
+
+&lt;p style=&quot;width: 60%;&quot; class=&quot;center&quot;&gt;&lt;img src=&quot;/blog/assets/images/2019-09-19-meta-learning/maml-algo.png&quot; alt=&quot;MAML Algorithm&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Fig. 12. The general form of MAML algorithm. (图像来源：&lt;a href=&quot;https://arxiv.org/abs/1703.03400&quot;&gt;原论文&lt;/a&gt;)&lt;/em&gt;&lt;/p&gt;
+
+&lt;h4 id=&quot;first-order-maml&quot;&gt;First-Order MAML&lt;/h4&gt;
+
+&lt;p&gt;The meta-optimization step above relies on second derivatives. To make the computation less expensive, a modified version of MAML omits second derivatives, resulting in a simplified and cheaper implementation, known as &lt;strong&gt;First-Order MAML (FOMAML)&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;p&gt;Let’s consider the case of performing &lt;script type=&quot;math/tex&quot;&gt;k&lt;/script&gt; inner gradient steps, &lt;script type=&quot;math/tex&quot;&gt;k\geq1&lt;/script&gt; . Starting with the initial model parameter &lt;script type=&quot;math/tex&quot;&gt;\theta_\text{meta}&lt;/script&gt; :&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{aligned}
+\theta_0 &amp;= \theta_\text{meta}\\
+\theta_1 &amp;= \theta_0 - \alpha\nabla_\theta\mathcal{L}^{(0)}(\theta_0)\\
+\theta_2 &amp;= \theta_1 - \alpha\nabla_\theta\mathcal{L}^{(0)}(\theta_1)\\
+&amp;\dots\\
+\theta_k &amp;= \theta_{k-1} - \alpha\nabla_\theta\mathcal{L}^{(0)}(\theta_{k-1})
+\end{aligned} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;Then in the outer loop, we sample a new data batch for updating the meta-objective.&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{aligned}
+\theta_\text{meta} &amp;\leftarrow \theta_\text{meta} - \beta g_\text{MAML} &amp; \scriptstyle{\text{; update for meta-objective}} \\[2mm]
+\text{where } g_\text{MAML}
+&amp;= \nabla_{\theta} \mathcal{L}^{(1)}(\theta_k) &amp;\\[2mm]
+&amp;= \nabla_{\theta_k} \mathcal{L}^{(1)}(\theta_k) \cdot (\nabla_{\theta_{k-1}} \theta_k) \dots (\nabla_{\theta_0} \theta_1) \cdot (\nabla_{\theta} \theta_0) &amp; \scriptstyle{\text{; following the chain rule}} \\
+&amp;= \nabla_{\theta_k} \mathcal{L}^{(1)}(\theta_k) \cdot \prod_{i=1}^k \nabla_{\theta_{i-1}} \theta_i &amp;  \\
+&amp;= \nabla_{\theta_k} \mathcal{L}^{(1)}(\theta_k) \cdot \prod_{i=1}^k \nabla_{\theta_{i-1}} (\theta_{i-1} - \alpha\nabla_\theta\mathcal{L}^{(0)}(\theta_{i-1})) &amp;  \\
+&amp;= \nabla_{\theta_k} \mathcal{L}^{(1)}(\theta_k) \cdot \prod_{i=1}^k (I - \alpha\nabla_{\theta_{i-1}}(\nabla_\theta\mathcal{L}^{(0)}(\theta_{i-1}))) &amp;
+\end{aligned} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;The MAML gradient is:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;g_\text{MAML} = \nabla_{\theta_k} \mathcal{L}^{(1)}(\theta_k) \cdot \prod_{i=1}^k (I - \alpha \color{red}{\nabla_{\theta_{i-1}}(\nabla_\theta\mathcal{L}^{(0)}(\theta_{i-1}))})&lt;/script&gt;
+
+&lt;p&gt;The First-Order MAML ignores the second derivative part in red. It is simplified as follows, equivalent to the derivative of the last inner gradient update result.&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;g_\text{FOMAML} = \nabla_{\theta_k} \mathcal{L}^{(1)}(\theta_k)&lt;/script&gt;
+
+&lt;h3 id=&quot;reptile&quot;&gt;Reptile&lt;/h3&gt;
+
+&lt;p&gt;&lt;strong&gt;Reptile&lt;/strong&gt; (&lt;a href=&quot;https://arxiv.org/abs/1803.02999&quot;&gt;Nichol, Achiam &amp;amp; Schulman, 2018&lt;/a&gt;) is a remarkably simple meta-learning optimization algorithm. It is similar to MAML in many ways, given that both rely on meta-optimization through gradient descent and both are model-agnostic.&lt;/p&gt;
+
+&lt;p&gt;The Reptile works by repeatedly:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;1) sampling a task,&lt;/li&gt;
+  &lt;li&gt;2) training on it by multiple gradient descent steps,&lt;/li&gt;
+  &lt;li&gt;3) and then moving the model weights towards the new parameters.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;See the algorithm below:
+ &lt;script type=&quot;math/tex&quot;&gt;\text{SGD}(\mathcal{L}_{\tau_i}, \theta, k)&lt;/script&gt; performs stochastic gradient update for k steps on the loss &lt;script type=&quot;math/tex&quot;&gt;\mathcal{L}_{\tau_i}&lt;/script&gt; starting with initial parameter &lt;script type=&quot;math/tex&quot;&gt;\theta&lt;/script&gt; and returns the final parameter vector. The batch version samples multiple tasks instead of one within each iteration. The reptile gradient is defined as &lt;script type=&quot;math/tex&quot;&gt;(\theta - W)/\alpha&lt;/script&gt; , where &lt;script type=&quot;math/tex&quot;&gt;\alpha&lt;/script&gt; is the stepsize used by the SGD operation.&lt;/p&gt;
+
+&lt;p style=&quot;width: 52%;&quot; class=&quot;center&quot;&gt;&lt;img src=&quot;/blog/assets/images/2019-09-19-meta-learning/reptile-algo.png&quot; alt=&quot;Reptile Algorithm&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Fig. 13. The batched version of Reptile algorithm. (图像来源：&lt;a href=&quot;https://arxiv.org/abs/1803.02999&quot;&gt;原论文&lt;/a&gt;)&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;At a glance, the algorithm looks a lot like an ordinary SGD. However, because the task-specific optimization can take more than one step. it eventually makes &lt;script type=&quot;math/tex&quot;&gt;\text{SGD}(\mathbb{E}
+_\tau[\mathcal{L}_{\tau}], \theta, k)&lt;/script&gt; diverge from &lt;script type=&quot;math/tex&quot;&gt;\mathbb{E}_\tau [\text{SGD}(\mathcal{L}_{\tau}, \theta, k)]&lt;/script&gt; when k &amp;gt; 1.&lt;/p&gt;
+
+&lt;h4 id=&quot;the-optimization-assumption&quot;&gt;The Optimization Assumption&lt;/h4&gt;
+
+&lt;p&gt;Assuming that a task &lt;script type=&quot;math/tex&quot;&gt;\tau \sim p(\tau)&lt;/script&gt; has a manifold of optimal network configuration, &lt;script type=&quot;math/tex&quot;&gt;\mathcal{W}_{\tau}^*&lt;/script&gt; . The model &lt;script type=&quot;math/tex&quot;&gt;f_\theta&lt;/script&gt; achieves the best performance for task &lt;script type=&quot;math/tex&quot;&gt;\tau&lt;/script&gt; when &lt;script type=&quot;math/tex&quot;&gt;\theta&lt;/script&gt; lays on the surface of &lt;script type=&quot;math/tex&quot;&gt;\mathcal{W}_{\tau}^*&lt;/script&gt; . To find a solution that is good across tasks, we would like to find a parameter close to all the optimal manifolds of all tasks:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\theta^* = \arg\min_\theta \mathbb{E}_{\tau \sim p(\tau)} [\frac{1}{2} \text{dist}(\theta, \mathcal{W}_\tau^*)^2]&lt;/script&gt;
+
+&lt;p style=&quot;width: 50%;&quot; class=&quot;center&quot;&gt;&lt;img src=&quot;/blog/assets/images/2019-09-19-meta-learning/reptile-optim.png&quot; alt=&quot;Reptile Algorithm&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Fig. 14. The Reptile algorithm updates the parameter alternatively to be closer to the optimal manifolds of different tasks. (图像来源：&lt;a href=&quot;https://arxiv.org/abs/1803.02999&quot;&gt;原论文&lt;/a&gt;)&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;Let’s use the L2 distance as &lt;script type=&quot;math/tex&quot;&gt;\text{dist}(.)&lt;/script&gt; and the distance between a point &lt;script type=&quot;math/tex&quot;&gt;\theta&lt;/script&gt; and a set &lt;script type=&quot;math/tex&quot;&gt;\mathcal{W}_\tau^*&lt;/script&gt; equals to the distance between &lt;script type=&quot;math/tex&quot;&gt;\theta&lt;/script&gt; and a point &lt;script type=&quot;math/tex&quot;&gt;W_{\tau}^*(\theta)&lt;/script&gt; on the manifold that is closest to &lt;script type=&quot;math/tex&quot;&gt;\theta&lt;/script&gt; :&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\text{dist}(\theta, \mathcal{W}_{\tau}^*) = \text{dist}(\theta, W_{\tau}^*(\theta)) \text{, where }W_{\tau}^*(\theta) = \arg\min_{W\in\mathcal{W}_{\tau}^*} \text{dist}(\theta, W)&lt;/script&gt;
+
+&lt;p&gt;The gradient of the squared euclidean distance is:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{aligned}
+\nabla_\theta[\frac{1}{2}\text{dist}(\theta, \mathcal{W}_{\tau_i}^*)^2]
+&amp;= \nabla_\theta[\frac{1}{2}\text{dist}(\theta, W_{\tau_i}^*(\theta))^2] &amp; \\
+&amp;= \nabla_\theta[\frac{1}{2}(\theta - W_{\tau_i}^*(\theta))^2] &amp; \\
+&amp;= \theta - W_{\tau_i}^*(\theta) &amp; \scriptstyle{\text{; See notes.}}
+\end{aligned} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;Notes: According to the Reptile paper, “&lt;em&gt;the gradient of the squared euclidean distance between a point Θ and a set S is the vector 2(Θ − p), where p is the closest point in S to Θ&lt;/em&gt;”. Technically the closest point in S is also a function of Θ, but I’m not sure why the gradient does not need to worry about the derivative of p. (Please feel free to leave me a comment or send me an email about this if you have ideas.)&lt;/p&gt;
+
+&lt;p&gt;Thus the update rule for one stochastic gradient step is:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\theta = \theta - \alpha \nabla_\theta[\frac{1}{2} \text{dist}(\theta, \mathcal{W}_{\tau_i}^*)^2] = \theta - \alpha(\theta - W_{\tau_i}^*(\theta)) = (1-\alpha)\theta + \alpha W_{\tau_i}^*(\theta)&lt;/script&gt;
+
+&lt;p&gt;The closest point on the optimal task manifold &lt;script type=&quot;math/tex&quot;&gt;W_{\tau_i}^*(\theta)&lt;/script&gt; cannot be computed exactly, but Reptile approximates it using &lt;script type=&quot;math/tex&quot;&gt;\text{SGD}(\mathcal{L}_\tau, \theta, k)&lt;/script&gt; .&lt;/p&gt;
+
+&lt;h4 id=&quot;reptile-vs-fomaml&quot;&gt;Reptile vs FOMAML&lt;/h4&gt;
+
+&lt;p&gt;To demonstrate the deeper connection between Reptile and MAML, let’s expand the update formula with an example performing two gradient steps, k=2 in &lt;script type=&quot;math/tex&quot;&gt;\text{SGD}(.)&lt;/script&gt; . Same as defined &lt;a href=&quot;#maml&quot;&gt;above&lt;/a&gt;, &lt;script type=&quot;math/tex&quot;&gt;\mathcal{L}^{(0)}&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;\mathcal{L}^{(1)}&lt;/script&gt; are losses using different mini-batches of data. For ease of reading, we adopt two simplified annotations: &lt;script type=&quot;math/tex&quot;&gt;g^{(i)}_j = \nabla_{\theta} \mathcal{L}^{(i)}(\theta_j)&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;H^{(i)}_j = \nabla^2_{\theta} \mathcal{L}^{(i)}(\theta_j)&lt;/script&gt; .&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{aligned}
+\theta_0 &amp;= \theta_\text{meta}\\
+\theta_1 &amp;= \theta_0 - \alpha\nabla_\theta\mathcal{L}^{(0)}(\theta_0)= \theta_0 - \alpha g^{(0)}_0 \\
+\theta_2 &amp;= \theta_1 - \alpha\nabla_\theta\mathcal{L}^{(1)}(\theta_1) = \theta_0 - \alpha g^{(0)}_0 - \alpha g^{(1)}_1
+\end{aligned} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;According to the &lt;a href=&quot;#first-order-maml&quot;&gt;early section&lt;/a&gt;, the gradient of FOMAML is the last inner gradient update result. Therefore, when k=1:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{aligned}
+g_\text{FOMAML} &amp;= \nabla_{\theta_1} \mathcal{L}^{(1)}(\theta_1) = g^{(1)}_1 \\
+g_\text{MAML} &amp;= \nabla_{\theta_1} \mathcal{L}^{(1)}(\theta_1) \cdot (I - \alpha\nabla^2_{\theta} \mathcal{L}^{(0)}(\theta_0)) = g^{(1)}_1 - \alpha H^{(0)}_0 g^{(1)}_1
+\end{aligned} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;The Reptile gradient is defined as:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;g_\text{Reptile} = (\theta_0 - \theta_2) / \alpha = g^{(0)}_0 + g^{(1)}_1&lt;/script&gt;
+
+&lt;p&gt;Up to now we have:&lt;/p&gt;
+
+&lt;p style=&quot;width: 50%;&quot; class=&quot;center&quot;&gt;&lt;img src=&quot;/blog/assets/images/2019-09-19-meta-learning/reptile_vs_FOMAML.png&quot; alt=&quot;Reptile vs FOMAML&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Fig. 15. Reptile versus FOMAML in one loop of meta-optimization. (图像来源：&lt;a href=&quot;https://www.slideshare.net/YoonhoLee4/on-firstorder-metalearning-algorithms&quot;&gt;slides&lt;/a&gt; on Reptile by Yoonho Lee.)&lt;/em&gt;&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{aligned}
+g_\text{FOMAML} &amp;= g^{(1)}_1 \\
+g_\text{MAML} &amp;= g^{(1)}_1 - \alpha H^{(0)}_0 g^{(1)}_1 \\
+g_\text{Reptile} &amp;= g^{(0)}_0 + g^{(1)}_1
+\end{aligned} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;Next let’s try further expand &lt;script type=&quot;math/tex&quot;&gt;g^{(1)}_1&lt;/script&gt; using &lt;a href=&quot;https://en.wikipedia.org/wiki/Taylor_series&quot;&gt;Taylor expansion&lt;/a&gt;. Recall that Taylor expansion of a function &lt;script type=&quot;math/tex&quot;&gt;f(x)&lt;/script&gt; that is differentiable at a number &lt;script type=&quot;math/tex&quot;&gt;a&lt;/script&gt; is:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;f(x) = f(a) + \frac{f'(a)}{1!}(x-a) + \frac{f''(a)}{2!}(x-a)^2 + \dots = \sum_{i=0}^\infty \frac{f^{(i)}(a)}{i!}(x-a)^i&lt;/script&gt;
+
+&lt;p&gt;We can consider &lt;script type=&quot;math/tex&quot;&gt;\nabla_{\theta}\mathcal{L}^{(1)}(.)&lt;/script&gt; as a function and &lt;script type=&quot;math/tex&quot;&gt;\theta_0&lt;/script&gt; as a value point. The Taylor expansion of &lt;script type=&quot;math/tex&quot;&gt;g_1^{(1)}&lt;/script&gt; at the value point &lt;script type=&quot;math/tex&quot;&gt;\theta_0&lt;/script&gt; is:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{aligned}
+g_1^{(1)} &amp;= \nabla_{\theta}\mathcal{L}^{(1)}(\theta_1) \\
+&amp;= \nabla_{\theta}\mathcal{L}^{(1)}(\theta_0) + \nabla^2_\theta\mathcal{L}^{(1)}(\theta_0)(\theta_1 - \theta_0) + \frac{1}{2}\nabla^3_\theta\mathcal{L}^{(1)}(\theta_0)(\theta_1 - \theta_0)^2 + \dots &amp; \\
+&amp;= g_0^{(1)} - \alpha H^{(1)}_0 g_0^{(0)} + \frac{\alpha^2}{2}\nabla^3_\theta\mathcal{L}^{(1)}(\theta_0) (g_0^{(0)})^2 + \dots &amp; \scriptstyle{\text{; because }\theta_1-\theta_0=-\alpha g_0^{(0)}} \\
+&amp;= g_0^{(1)} - \alpha H^{(1)}_0 g_0^{(0)} + O(\alpha^2)
+\end{aligned} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;Plug in the expanded form of &lt;script type=&quot;math/tex&quot;&gt;g_1^{(1)}&lt;/script&gt; into the MAML gradients with one step inner gradient update:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{aligned}
+g_\text{FOMAML} &amp;= g^{(1)}_1 = g_0^{(1)} - \alpha H^{(1)}_0 g_0^{(0)} + O(\alpha^2)\\
+g_\text{MAML} &amp;= g^{(1)}_1 - \alpha H^{(0)}_0 g^{(1)}_1 \\
+&amp;= g_0^{(1)} - \alpha H^{(1)}_0 g_0^{(0)} + O(\alpha^2) - \alpha H^{(0)}_0 (g_0^{(1)} - \alpha H^{(1)}_0 g_0^{(0)} + O(\alpha^2))\\
+&amp;= g_0^{(1)} - \alpha H^{(1)}_0 g_0^{(0)} - \alpha H^{(0)}_0 g_0^{(1)} + \alpha^2 \alpha H^{(0)}_0 H^{(1)}_0 g_0^{(0)} + O(\alpha^2)\\
+&amp;= g_0^{(1)} - \alpha H^{(1)}_0 g_0^{(0)} - \alpha H^{(0)}_0 g_0^{(1)} + O(\alpha^2)
+\end{aligned} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;The Reptile gradient becomes:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{aligned}
+g_\text{Reptile} 
+&amp;= g^{(0)}_0 + g^{(1)}_1 \\
+&amp;= g^{(0)}_0 + g_0^{(1)} - \alpha H^{(1)}_0 g_0^{(0)} + O(\alpha^2)
+\end{aligned} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;So far we have the formula of three types of gradients:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{aligned}
+g_\text{FOMAML} &amp;= g_0^{(1)} - \alpha H^{(1)}_0 g_0^{(0)} + O(\alpha^2)\\
+g_\text{MAML} &amp;= g_0^{(1)} - \alpha H^{(1)}_0 g_0^{(0)} - \alpha H^{(0)}_0 g_0^{(1)} + O(\alpha^2)\\
+g_\text{Reptile}  &amp;= g^{(0)}_0 + g_0^{(1)} - \alpha H^{(1)}_0 g_0^{(0)} + O(\alpha^2)
+\end{aligned} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;During training, we often average over multiple data batches. In our example, the mini batches (0) and (1) are interchangeable since both are drawn at random. The expectation &lt;script type=&quot;math/tex&quot;&gt;\mathbb{E}_{\tau,0,1}&lt;/script&gt; is averaged over two data batches, ids (0) and (1), for task &lt;script type=&quot;math/tex&quot;&gt;\tau&lt;/script&gt; .&lt;/p&gt;
+
+&lt;p&gt;Let,&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;A = \mathbb{E}_{\tau,0,1} [g_0^{(0)}] = \mathbb{E}_{\tau,0,1} [g_0^{(1)}]&lt;/script&gt; ; it is the average gradient of task loss. We expect to improve the model parameter to achieve better task performance by following this direction pointed by &lt;script type=&quot;math/tex&quot;&gt;A&lt;/script&gt; .&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;B = \mathbb{E}_{\tau,0,1} [H^{(1)}_0 g_0^{(0)}] = \frac{1}{2}\mathbb{E}_{\tau,0,1} [H^{(1)}_0 g_0^{(0)} + H^{(0)}_0 g_0^{(1)}] = \frac{1}{2}\mathbb{E}_{\tau,0,1} [\nabla_\theta(g^{(0)}_0 g_0^{(1)})]&lt;/script&gt; ; it is the direction (gradient) that increases the inner product of gradients of two different mini batches for the same task. We expect to improve the model parameter to achieve better generalization over different data by following this direction pointed by &lt;script type=&quot;math/tex&quot;&gt;B&lt;/script&gt; .&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;To conclude, both MAML and Reptile aim to optimize for the same goal, better task performance (guided by A) and better generalization (guided by B), when the gradient update is approximated by first three leading terms.&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{aligned}
+\mathbb{E}_{\tau,1,2}[g_\text{FOMAML}] &amp;= A - \alpha B + O(\alpha^2)\\
+\mathbb{E}_{\tau,1,2}[g_\text{MAML}] &amp;= A - 2\alpha B + O(\alpha^2)\\
+\mathbb{E}_{\tau,1,2}[g_\text{Reptile}]  &amp;= 2A - \alpha B + O(\alpha^2)
+\end{aligned} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;It is not clear to me whether the ignored term &lt;script type=&quot;math/tex&quot;&gt;O(\alpha^2)&lt;/script&gt; might play a big impact on the parameter learning. But given that FOMAML is able to obtain a similar performance as the full version of MAML, it might be safe to say higher-level derivatives would not be critical during gradient descent update.&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;Cited as:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;@article{weng2018metalearning,
+  title   = &quot;Meta-Learning: Learning to Learn Fast&quot;,
+  author  = &quot;Weng, Lilian&quot;,
+  journal = &quot;lilianweng.github.io/lil-log&quot;,
+  year    = &quot;2018&quot;,
+  url     = &quot;http://lilianweng.github.io/lil-log/2018/11/29/meta-learning.html&quot;
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;em&gt;If you notice mistakes and errors in this post, don’t hesitate to leave a comment or contact me at [lilian dot wengweng at gmail dot com] and I would be very happy to correct them asap.&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;See you in the next post!&lt;/p&gt;
+
+&lt;h2 id=&quot;reference&quot;&gt;Reference&lt;/h2&gt;
+
+&lt;p&gt;[1] Brenden M. Lake, Ruslan Salakhutdinov, and Joshua B. Tenenbaum. &lt;a href=&quot;https://www.cs.cmu.edu/~rsalakhu/papers/LakeEtAl2015Science.pdf&quot;&gt;“Human-level concept learning through probabilistic program induction.”&lt;/a&gt; Science 350.6266 (2015): 1332-1338.&lt;/p&gt;
+
+&lt;p&gt;[2] Oriol Vinyals’ talk on &lt;a href=&quot;http://metalearning-symposium.ml/files/vinyals.pdf&quot;&gt;“Model vs Optimization Meta Learning”&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;[3] Gregory Koch, Richard Zemel, and Ruslan Salakhutdinov. &lt;a href=&quot;http://www.cs.toronto.edu/~rsalakhu/papers/oneshot1.pdf&quot;&gt;“Siamese neural networks for one-shot image recognition.”&lt;/a&gt; ICML Deep Learning Workshop. 2015.&lt;/p&gt;
+
+&lt;p&gt;[4] Oriol Vinyals, et al. &lt;a href=&quot;http://papers.nips.cc/paper/6385-matching-networks-for-one-shot-learning.pdf&quot;&gt;“Matching networks for one shot learning.”&lt;/a&gt; NIPS. 2016.&lt;/p&gt;
+
+&lt;p&gt;[5] Flood Sung, et al. &lt;a href=&quot;http://openaccess.thecvf.com/content_cvpr_2018/papers_backup/Sung_Learning_to_Compare_CVPR_2018_paper.pdf&quot;&gt;“Learning to compare: Relation network for few-shot learning.”&lt;/a&gt; CVPR. 2018.&lt;/p&gt;
+
+&lt;p&gt;[6] Jake Snell, Kevin Swersky, and Richard Zemel. &lt;a href=&quot;http://papers.nips.cc/paper/6996-prototypical-networks-for-few-shot-learning.pdf&quot;&gt;“Prototypical Networks for Few-shot Learning.”&lt;/a&gt; CVPR. 2018.&lt;/p&gt;
+
+&lt;p&gt;[7] Adam Santoro, et al. &lt;a href=&quot;http://proceedings.mlr.press/v48/santoro16.pdf&quot;&gt;“Meta-learning with memory-augmented neural networks.”&lt;/a&gt; ICML. 2016.&lt;/p&gt;
+
+&lt;p&gt;[8] Alex Graves, Greg Wayne, and Ivo Danihelka. &lt;a href=&quot;https://arxiv.org/abs/1410.5401&quot;&gt;“Neural turing machines.”&lt;/a&gt; arXiv preprint arXiv:1410.5401 (2014).&lt;/p&gt;
+
+&lt;p&gt;[9] Tsendsuren Munkhdalai and Hong Yu. &lt;a href=&quot;https://arxiv.org/abs/1703.00837&quot;&gt;“Meta Networks.”&lt;/a&gt; ICML. 2017.&lt;/p&gt;
+
+&lt;p&gt;[10] Sachin Ravi and Hugo Larochelle. &lt;a href=&quot;https://openreview.net/pdf?id=rJY0-Kcll&quot;&gt;“Optimization as a Model for Few-Shot Learning.”&lt;/a&gt; ICLR. 2017.&lt;/p&gt;
+
+&lt;p&gt;[11] Chelsea Finn’s BAIR blog on &lt;a href=&quot;https://bair.berkeley.edu/blog/2017/07/18/learning-to-learn/&quot;&gt;“Learning to Learn”&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;[12] Chelsea Finn, Pieter Abbeel, and Sergey Levine. &lt;a href=&quot;https://arxiv.org/abs/1703.03400&quot;&gt;“Model-agnostic meta-learning for fast adaptation of deep networks.”&lt;/a&gt; ICML 2017.&lt;/p&gt;
+
+&lt;p&gt;[13] Alex Nichol, Joshua Achiam, John Schulman. &lt;a href=&quot;https://arxiv.org/abs/1803.02999&quot;&gt;“On First-Order Meta-Learning Algorithms.”&lt;/a&gt; arXiv preprint arXiv:1803.02999 (2018).&lt;/p&gt;
+
+&lt;p&gt;[14] &lt;a href=&quot;https://www.slideshare.net/YoonhoLee4/on-firstorder-metalearning-algorithms&quot;&gt;Slides on Reptile&lt;/a&gt; by Yoonho Lee.&lt;/p&gt;</content><author><name>Tianhao Wei</name></author><category term="meta-learning" /><category term="long-read" /><summary type="html">学习如何学习的方法被称为元学习。元学习的目标是在接触到没见过的任务或者迁移到新环境中时，可以根据之前的经验和少量的样本快速学习如何应对。元学习有三种常见的实现方法：1）学习有效的距离度量方式（基于度量的方法）；2）使用带有显式或隐式记忆储存的（循环）神经网络（基于模型的方法）；3）训练以快速学习为目标的模型（基于优化的方法）</summary></entry><entry><title type="html">OSVOS跟进</title><link href="http://localhost:4000/blog/%E8%AE%BA%E6%96%87/2017/06/04/OSVOS%E8%B7%9F%E8%BF%9B.html" rel="alternate" type="text/html" title="OSVOS跟进" /><published>2017-06-04T22:00:00-04:00</published><updated>2017-06-04T22:00:00-04:00</updated><id>http://localhost:4000/blog/%E8%AE%BA%E6%96%87/2017/06/04/OSVOS%E8%B7%9F%E8%BF%9B</id><content type="html" xml:base="http://localhost:4000/blog/%E8%AE%BA%E6%96%87/2017/06/04/OSVOS%E8%B7%9F%E8%BF%9B.html">&lt;blockquote&gt;
+  &lt;p&gt;没啥好说的。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;!--more--&gt;
+
+&lt;h2 id=&quot;semantically-guided-video-object-segmentation&quot;&gt;Semantically-Guided Video Object Segmentation&lt;/h2&gt;
+
+&lt;p&gt;这篇论文我很喜欢，更符合人类的认知过程。&lt;/p&gt;
+
+&lt;p&gt;该篇论文提出的方法是模拟人类在视频中追踪物体的情形，人们在视频追踪的时候分为两种情形，一种是连续的画面，那很自然的就由上一帧的物体所在点过渡过来；但是当漏了几秒没看的时候，人们是怎么识别物体的呢？这就是该篇论文的出发点，语义分析追踪。即我第一帧看到了车，在画面不能连续起来的时候我就去找“车”这个语义在图片哪里。&lt;/p&gt;
+
+&lt;p&gt;对于第一帧图片使用FCN对图片中的各种物体做出像素级预测，然后寻找与mask重合最多的预测，比如说是car。对后面的帧预测的时候，即可先对图片做语义分割，然后找语义为car的预测，在于上一帧的mask结合，做出预测。总体结构如下&lt;img src=&quot;../assets/images/2017-06-05-OSVOS跟进/屏幕快照 2017-06-05 上午12.15.02.png&quot; alt=&quot;屏幕快照 2017-06-05 上午12.15.02&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;论文还提出了一个conditional classifier layer，主要功能是视情况结合propagation的结果和semantic segmentation的结果。比如物体移动非常剧烈的时候只采用semantic segmentation，放弃propagation的mask；而又多个相同语义的物体时则要侧重于propagation的结果（具体实现以后还要再看下）。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;../assets/images/2017-06-05-OSVOS跟进/屏幕快照 2017-06-05 上午12.17.36.png&quot; alt=&quot;屏幕快照 2017-06-05 上午12.17.36&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;这篇论文我觉的最符合人类的直观认识，不知道还能不能再从这方面深入挖掘一下。&lt;/p&gt;
+
+&lt;h2 id=&quot;lucid-data-dreaming-for-object-tracking&quot;&gt;Lucid Data Dreaming for Object Tracking&lt;/h2&gt;
+
+&lt;p&gt;该篇论文主要提出了一种增强数据的方法，可以只用训练集里的数据就达到较好的效果。&lt;/p&gt;
+
+&lt;p&gt;按照以下五步来&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;光照随机变化，变换HSV中S和V&lt;/li&gt;
+  &lt;li&gt;把前景抠出来，补全背景&lt;/li&gt;
+  &lt;li&gt;随机移动、变形前景&lt;/li&gt;
+  &lt;li&gt;随机模拟相机变化，平移、旋转、放缩&lt;/li&gt;
+  &lt;li&gt;前景背景结合&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;img src=&quot;../assets/images/2017-06-05-OSVOS跟进/屏幕快照 2017-06-04 下午11.54.18.png&quot; alt=&quot;屏幕快照 2017-06-04 下午11.57.37&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;作者用一帧生成&lt;script type=&quot;math/tex&quot;&gt;10^3&lt;/script&gt;级别的训练数据，效果相同的情形下数据量仅为原来的&lt;script type=&quot;math/tex&quot;&gt;\frac1{100}&lt;/script&gt;到&lt;script type=&quot;math/tex&quot;&gt;\frac1{20}&lt;/script&gt;。这种数据生成是跟网络完全独立的，可以用在以后的训练中。&lt;/p&gt;
+
+&lt;p&gt;作者训练用的模型是结合上一帧的mask与optical flow的模型，不是本文研究的重点，简要介绍了一下。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;../assets/images/2017-06-05-OSVOS跟进/屏幕快照 2017-06-04 下午11.57.37.png&quot; alt=&quot;屏幕快照 2017-06-04 下午11.57.37&quot; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;learning-video-object-segmentation-from-static-images&quot;&gt;Learning Video Object Segmentation from Static Images&lt;/h2&gt;
+
+&lt;p&gt;这篇论文提出将视频vido object segmentation看做是guided instance segmentation。本文的模型是先用静态图像预训练convnet，再由视频中的前几帧引导，生成高精确度的分割。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;../assets/images/2017-06-05-OSVOS跟进/屏幕快照 2017-06-03 下午12.08.47.png&quot; alt=&quot;屏幕快照 2017-06-03 下午12.08.47&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;模型的关键在于离线和在线算法的结合，离线算法用于学习物体的特征，在线算法refine mask。大步骤跟OSVOS基本一致，但本质思想不同&lt;/p&gt;
+
+&lt;h3 id=&quot;与osvos的区别&quot;&gt;与OSVOS的区别&lt;/h3&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;总体思路是Mask Track，而OSVOS则是Mask再识别。对于当前帧的预测，该篇论文使用当前帧帧的前几帧做引导，但OSVOS只是用了视频的第一帧，即没有propagation的过程。只用第一帧可能会导致效果随着时间下降（与第一帧差异越来越大）。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;ul&gt;
+      &lt;li&gt;第一步pre-training，同样是图像识别&lt;/li&gt;
+      &lt;li&gt;第二步offline training，OSVOS是使用训练集使网络学习mask的广义概念，而该篇则注重使网络学习如何propagating（根据前几帧的mask和当前帧推导出当前帧的mask）&lt;/li&gt;
+      &lt;li&gt;第三步online training，同样是使用test视频的一张标注来refine，而OSVOS还有轮廓的CNN预测来提高精确度。该篇的refine是通过对第一张mask进行各种变换形成许多训练数据，用这些数据训练网络，在test时用第一张标注辅助propagation（类似广义mask）&lt;/li&gt;
+      &lt;li&gt;Test，OSVOS只用第一张进行mask预测，该篇除了使用propagation以外也同样将第一张标注用于所有图像的mask预测&lt;/li&gt;
+    &lt;/ul&gt;
+
+    &lt;p&gt;主要区别在于第二步，第三步中OSVOS的轮廓预测是独立的模块，可以应用到该篇&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&quot;训练细节&quot;&gt;训练细节&lt;/h3&gt;
+
+&lt;p&gt;使用的网络是DeepLabv2-VGG network，&lt;/p&gt;
+
+&lt;p&gt;第二步的实际训练方式是先将前一帧的mask做一些形态学变换模拟各种噪声，增大数据量，同时使用图片识别的mask进行一些形态学变换，来模拟前一帧与当前帧的差异。这样就可以使用图片识别的数据集进行训练，数据量大大提升。）&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;../assets/images/2017-06-05-OSVOS跟进/屏幕快照 2017-06-03 下午12.09.00.png&quot; alt=&quot;屏幕快照 2017-06-03 下午12.09.00&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;作者还提出了几种guidence的变体，有box annotation和optical flow&lt;/p&gt;
+
+&lt;p&gt;第一张的online finetuning要200次迭代，加上第一张的fintuning平均每帧的预测要12秒&lt;/p&gt;
+
+&lt;h2 id=&quot;automatic-real-time-background-cut-for-portrait-videos&quot;&gt;Automatic Real-time Background Cut for Portrait Videos&lt;/h2&gt;
+
+&lt;p&gt;这篇论文是讲怎么从视频里实时抠出人像的，主要是借鉴OSVOS来学习背景。&lt;/p&gt;
+
+&lt;p&gt;该网络先学习许多背景的采样，再跟原视频结合，达到更好的消除效果，称为global attenuation&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;../assets/images/2017-06-05-OSVOS跟进/屏幕快照 2017-06-05 上午12.25.38.png&quot; alt=&quot;屏幕快照 2017-06-05 上午12.25.38&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;感觉这个问题与video object segmentation差别比较大，因为人的大小基本恒定，而且背景一般是静态的。该网络对于动态背景的表现很差。&lt;/p&gt;
+
+&lt;p&gt;启发点可能有对于背景的学习是否可以更重视一些？&lt;/p&gt;
+
+&lt;h2 id=&quot;deeply-supervised-salient-object-detection-with-short-connections&quot;&gt;Deeply Supervised Salient Object Detection with Short Connections&lt;/h2&gt;
+
+&lt;p&gt;在HED中，深层的side outputs主要用于定位，浅层的side outputs主要用于表达细节，这启发了作者使用short connections在HED内部构建skip-layer，更好的结合深层与浅层的能力。下图的c和d是作者提出的模型。（以下暂称SCHED(short connected HED)，作者没给官方简称…）&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;../assets/images/2017-06-05-OSVOS跟进/屏幕快照 2017-06-04 下午9.59.57.png&quot; alt=&quot;屏幕快照 2017-06-04 下午9.59.57&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;这个网络的具体应用我觉得可以有以下几种途径&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;OSVOS跟进，用这个网络与ImageNet预训练的网络（或者合并成一个预训练过的网络）共同学习如何区分前景和后景，提升OSVOS区分mask的能力，总体步骤不变。
+    &lt;ul&gt;
+      &lt;li&gt;优势：mask一般是salient object，应该学习起来比较容易，而且SCHED带有轮廓学习能力，可以省略OSVOS中的轮廓CNN，提升速度，简化模型&lt;/li&gt;
+      &lt;li&gt;劣势：有时候mask是不起眼的物体，比如远处来的赛车，一开始很小，这种情况可能学习起来比较困难&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;Learning Video Object Segmentation from Static Images跟进，用SCHED代替optical flow，与propagation结合
+    &lt;ul&gt;
+      &lt;li&gt;优势，更快，轮廓更精确&lt;/li&gt;
+      &lt;li&gt;劣势，没有明显的理由表明会提升表现&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;</content><author><name>Tianhao Wei</name></author><summary type="html">没啥好说的。</summary></entry><entry><title type="html">语义分割笔记</title><link href="http://localhost:4000/blog/%E8%AE%BA%E6%96%87/2017/05/25/semantic-segmentation.html" rel="alternate" type="text/html" title="语义分割笔记" /><published>2017-05-25T22:00:42-04:00</published><updated>2017-05-25T22:00:42-04:00</updated><id>http://localhost:4000/blog/%E8%AE%BA%E6%96%87/2017/05/25/semantic-segmentation</id><content type="html" xml:base="http://localhost:4000/blog/%E8%AE%BA%E6%96%87/2017/05/25/semantic-segmentation.html">&lt;blockquote&gt;
+  &lt;p&gt;没啥好说的。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;!--more--&gt;
+
+&lt;h2 id=&quot;image-caption为什么需要semantic-segmentation&quot;&gt;Image Caption为什么需要Semantic Segmentation&lt;/h2&gt;
+
+&lt;p&gt;一开始的网络只是把CNN的FC层直接输入RNN，但这个层里面的东西是难以解释的，但是RNN这么稀里糊涂的弄一弄就能描述出来图片了。这让人非常没有掌控感，于是后来Google有一篇论文就是讨论输入RNN的东西的可解释性是否对于Image caption有作用，一个很自然的想法是不仅要输入图像中的各项特征，而最好能把图像中的各个物体标注出来，将语义信息输入RNN。结果发现，输入可解释的信息大大提高了神经网络的表现。并不是稀里糊涂的一通训练就可以得到好的效果的。这篇论文非常具有启发性。一个创新之后，对这个创新中的局部进行优化，对局部之间的协作方式进行优化，对创新中说得不清晰或者不合理的部分敢于反思并探索，往往大的提升就在这些模糊的区域中了。接下来是几篇经典论文串讲，从最基础的AlexNet开始。&lt;/p&gt;
+
+&lt;h2 id=&quot;imagenet-classification-with-deep-convolutional-neural-networks&quot;&gt;ImageNet Classification with Deep Convolutional Neural Networks&lt;/h2&gt;
+
+&lt;p&gt;这篇论文开创了利用深度卷积神经网络进行图像识别的方法。也就是著名的AlexNet，结构如下图，5个卷积层，3个全连接层：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;../assets/images/2017-05-26-semantic-segmentation/044A5076-2F92-4F13-BC6C-B16399096979.png&quot; alt=&quot;044A5076-2F92-4F13-BC6C-B16399096979&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;虽然AlexNet不是CNN的开创者，但他使用了许多技术使得CNN的识别能力大幅提高并已成为现在的标准配置，有&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;ReLU：没有饱和的问题，更快&lt;/li&gt;
+  &lt;li&gt;Overlapping Pooling，轻微改善，防止过拟合&lt;/li&gt;
+  &lt;li&gt;多GPU并行, 更快&lt;/li&gt;
+  &lt;li&gt;LRN，ReLU后的局部归一化，虽然ReLU对很大的X依然有效，但这样还是能改善一些&lt;/li&gt;
+  &lt;li&gt;减少过拟合：1）数据扩增，各种形态学变化之类的。 2）Dropout，方便好用，记得test的时乘上&lt;/li&gt;
+  &lt;li&gt;Weight Decay，感觉实际上就是正则项&lt;script type=&quot;math/tex&quot;&gt;\lambda&lt;/script&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;接下来介绍如何用CNN作语义分割&lt;/p&gt;
+
+&lt;h2 id=&quot;fully-convolutional-networks-for-semantic-segmentation&quot;&gt;Fully Convolutional Networks for Semantic Segmentation&lt;/h2&gt;
+
+&lt;p&gt;这篇论文最早提出了全卷积网络的概念，想法其实很简单，CNN的输出是一维的向量，如果我们把最后面的FC层全都换成卷积层，就可以输出二维向量了，下图就是AlexNet卷积化后形成的全卷积网络：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;../assets/images/2017-05-26-semantic-segmentation/AD9967C8-2C82-411F-9322-FCF3743CF1C4.png&quot; alt=&quot;AD9967C8-2C82-411F-9322-FCF3743CF1C4&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;而且因为FCN与CNN结构非常相似，任务也比较接近，可以利用CNN训练好的网络进行Fine tuning，节省训练时间。而且在计算卷积的时候因为receptive fields重叠的非常多，所以训练很高效（这里不是很懂。。）&lt;/p&gt;
+
+&lt;p&gt;但从图中可以看出，这样最终生成的图像是比原来小的，而语义分割需要得到与原图同样大小的图像，那怎么办呢？接着论文提出了upsampling，deconvolution（CS231n里讲这个名字被吐槽的很多，叫conv transpose之类的比较好）的技巧（本质就是插值）。Deconvolution实际上就是将卷积的正向传播和反向传播反过来。反向卷积能否学习对于表现没有明显提升，所以学习率被置零了。但deconvolution又带来了一个问题，就是分辨率的问题，很容易想象出来，好比一张小照片被放大了一样，非常模糊。为了解决这个问题，作者又提出了skip layer的方法，即将前面的卷积层与后面同样大小的反卷积层结合起来。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;../assets/images/2017-05-26-semantic-segmentation/1705275F-792B-4BA4-8A47-72B219882490.png&quot; alt=&quot;1705275F-792B-4BA4-8A47-72B219882490&quot; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;deeplab-semantic-image-segmentation-withdeep-convolutional-nets-atrous-convolutionand-fully-connected-crfs&quot;&gt;DeepLab: Semantic Image Segmentation withDeep Convolutional Nets, Atrous Convolution,and Fully Connected CRFs&lt;/h2&gt;
+
+&lt;p&gt;这篇论文提出了使用DCNN实现语义分割的3个主要挑战&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;DCNN降低了特征的分辨率，而且为了保证图片不太小加入了100的padding，引入了噪声&lt;/li&gt;
+  &lt;li&gt;图片上存在着大小不一的物体&lt;/li&gt;
+  &lt;li&gt;图片特征在DCNN中的空间变化不变性导致的细节丢失（局部精确性与分类准确性的矛盾，上一篇论文使用了skip layer来处理这个问题）&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h4 id=&quot;第一个问题&quot;&gt;第一个问题&lt;/h4&gt;
+
+&lt;p&gt;作者首先更改了最后两层池化层，把pooling的stride改为1，同时加上1个padding，这样池化后像素的个数就不再改变了。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;../assets/images/2017-05-26-semantic-segmentation/766fc04b86b72f7e09d8f8ff6cb648e2_r-1.png&quot; alt=&quot;766fc04b86b72f7e09d8f8ff6cb648e2_r&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;上图的a是原来的池化，b是更改后的池化，c是为了增加感受野带洞的卷积atrous conv。（&lt;strong&gt;==这里池化和卷积分的不太清楚，之后看下代码==&lt;/strong&gt;）为什么要带洞呢，是因为b图的感受野是比a要小的，可以看出b图中池化后的连续三个像素对应着池化前的5个，而a图则对应着7个。这会导致全局性的削弱。因此作者收到atrous算法的启发，加上了洞。在扩大分辨率的同时保持了感受野。更改后输出的预测图的大小是原来的4倍，下图直观展示了效果，下图是先将一张图片downsample为1/2，然后分别使用竖向高斯导数卷积核和atrous核，最后再upsampling，高斯核只能得到原图的1/4坐标的预测，而atrous核能得到全部像素的预测&lt;img src=&quot;../assets/images/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 上午11.05.02.png&quot; alt=&quot;屏幕快照 2017-05-26 上午11.05.02&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;atrous具体的实现方法有两种，一种是往卷积核里插0，一种是把图片subsample，然后再标准卷积&lt;/p&gt;
+
+&lt;p&gt;有一点要说一下，为什么不把池化层直接去掉呢？主要是因为去掉以后网络结构改变，没法使用训练好的网络fine tuning。因为图像识别的数据量比较大，网络训练的比较成熟，所以一般都希望能够借助其训练好的模型。&lt;/p&gt;
+
+&lt;h4 id=&quot;第二个问题&quot;&gt;第二个问题&lt;/h4&gt;
+
+&lt;p&gt;不同尺寸目标的问题。一个好的解决方案是对于不同尺寸分别做DCNN，但这样太慢了，所以作者用了ASPP，并行的使用多个rate不同的atrous conv，这些卷积核共享参数，所以训练快了很多。如下图所示。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;../assets/images/2017-05-26-semantic-segmentation/431DA9CC-7296-4224-B087-6FD7482B8733.png&quot; alt=&quot;431DA9CC-7296-4224-B087-6FD7482B8733&quot; /&gt;&lt;/p&gt;
+
+&lt;h4 id=&quot;第三个问题&quot;&gt;第三个问题&lt;/h4&gt;
+
+&lt;p&gt;局部精确性与分类表现的矛盾问题。作者说有两种解决方法，一种就是利用多层网络中的信息来增强细节，如skip layers；另一种就是使用一些super-pixel（把像素划分成区域）表示，直接去底层获取信息，比如CRF&lt;/p&gt;
+
+&lt;p&gt;CRF的一个101http://blog.echen.me/2012/01/03/introduction-to-conditional-random-fields/（下面写了个3分钟版本的CRF感想，这个以后还有再系统学一下）&lt;/p&gt;
+
+&lt;p&gt;简单概括来说，CRF就是对于一个给定的全局观测，许多设定的特征函数，计算一个标签序列在这些特征函数下的得分，然后加权求和求得这个标签序列的得分。再将所有标签序列的得分Softmax归一化，作为该序列的概率。&lt;/p&gt;
+
+&lt;h4 id=&quot;scorels--sigma_j1msigma_i1nlambda_jf_js-i-l_i-l_i-1&quot;&gt;&lt;script type=&quot;math/tex&quot;&gt;score(l|s) = \Sigma_{j=1}^{m}\Sigma_{i=1}^n\lambda_jf_j(s, i, l_i, l_{i-1})&lt;/script&gt;&lt;/h4&gt;
+
+&lt;h4 id=&quot;pls--fracexpscorelssigma_l-expscorels&quot;&gt;&lt;script type=&quot;math/tex&quot;&gt;p(l|s) = \frac{exp[score(l|s)]}{\Sigma_{l'} exp[score(l'|s)]}&lt;/script&gt;&lt;/h4&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;f_j&lt;/script&gt; 是特征函数，具体定义由问题决定（比如在词义分析中，可以定义为形容词后面是名词则&lt;script type=&quot;math/tex&quot;&gt;f&lt;/script&gt; 为1，否则为0），&lt;script type=&quot;math/tex&quot;&gt;l&lt;/script&gt; 是一个标签序列，这里的公式针对的是一维的情况，在图像标注中应该改成二维的，&lt;script type=&quot;math/tex&quot;&gt;l_{i-1}&lt;/script&gt; 在二维中对应着&lt;script type=&quot;math/tex&quot;&gt;i&lt;/script&gt; 的邻居节点的标签&lt;/p&gt;
+
+&lt;p&gt;要做的事情就是学习&lt;script type=&quot;math/tex&quot;&gt;\lambda_j&lt;/script&gt; 的值，这跟Logistics回归非常像，实际上这就是个时间序列版的logistics回归。一般目标是用最大似然估计来衡量学习。&lt;/p&gt;
+
+&lt;p&gt;每一个HMM（隐马尔科夫模型）都等价于一个CRF，就是说CRF比HMM更强。对HMM模型取对数之后吧概率对数看做权值，即化为CRF。这是因为CRF的特征函数具有更强的自由性，可以根据全局来定义特征函数，而HMM自身带有局部性，限制了其相应的特征函数。而且CRF可以使用任意权重，而HMM只能使用对数概率作为权重。&lt;/p&gt;
+
+&lt;p&gt;在这篇论文中，优化的目标是使下面这个函数最小&lt;/p&gt;
+
+&lt;h4 id=&quot;ex--sigma_itheta_ix_isigma_ijtheta_ijx_i-x_j&quot;&gt;&lt;script type=&quot;math/tex&quot;&gt;E(x) = \Sigma_i\theta_i(x_i)+\Sigma_{ij}\theta_{ij}(x_i, x_j)&lt;/script&gt;&lt;/h4&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;x_i&lt;/script&gt; 是第&lt;script type=&quot;math/tex&quot;&gt;i&lt;/script&gt; 个像素的标签，&lt;script type=&quot;math/tex&quot;&gt;\theta_i(x_i) = -log P(x_i)&lt;/script&gt; ，&lt;script type=&quot;math/tex&quot;&gt;P(x_i)&lt;/script&gt; 是第i个像素贴上&lt;script type=&quot;math/tex&quot;&gt;x_i&lt;/script&gt; 这个标签的概率（由DCNN算出来的），&lt;script type=&quot;math/tex&quot;&gt;\theta_{ij}(x_i, x_j)&lt;/script&gt; 是像素&lt;script type=&quot;math/tex&quot;&gt;i&lt;/script&gt; 像素&lt;script type=&quot;math/tex&quot;&gt;j&lt;/script&gt; 之间关系的度量&lt;/p&gt;
+
+&lt;h4 id=&quot;theta_ijx_i-x_j--mux_i-x_jw_1-exp-fracp_i-p_j22sigma_alpha2-fraci_i-i_j22sigma_beta2-----------------------------------w_2-exp-fracp_i-p_j22sigma_gamma2&quot;&gt;&lt;script type=&quot;math/tex&quot;&gt;\theta_{ij}(x_i, x_j) = \mu(x_i, x_j)[w_1\ exp(-\frac{||p_i-p_j||^2}{2\sigma_{\alpha}^2}-\frac{||I_i-I_j||^2}{2\sigma_{\beta}^2}) \\\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ + w_2\ exp(-\frac{||p_i-p_j||^2}{2\sigma_{\gamma}^2})]&lt;/script&gt;&lt;/h4&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;\mu&lt;/script&gt; 在&lt;script type=&quot;math/tex&quot;&gt;x_i, x_j&lt;/script&gt; 相等的时候是0，不相等时是1（只会惩罚相同标签的像素），这就是个双边滤波……&lt;/p&gt;
+
+&lt;h4 id=&quot;实验中有启发的几个点&quot;&gt;实验中有启发的几个点&lt;/h4&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;learning rate使用poly策略比较好&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;batch size小一点（最后取了10），迭代次数多一点更有利于训练&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;在PASCAL-Person-Part上训练的时候LargeFOV和ASPP对于训练效果都没有提升，但CRF的提升效果非常明显。技术有适用性吧，No free lunch theory.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;从结果上来看CRF好像做了一些平滑和去噪的工作。（&lt;strong&gt;==对于CRF理解还不太到位，之前感觉像是起到精细化的作用，这里主要是双边滤波在起作用？==&lt;/strong&gt;）
+&lt;img src=&quot;../assets/images/2017-05-26-semantic-segmentation/D93EE4D0-6893-45C5-B6D6-65E608C01E7B.png&quot; alt=&quot;D93EE4D0-6893-45C5-B6D6-65E608C01E7B&quot; /&gt;&lt;/p&gt;
+
+    &lt;p&gt;&lt;img src=&quot;../assets/images/2017-05-26-semantic-segmentation/270A5970-D3CE-4C4D-86C0-86BC9E526AA3.png&quot; alt=&quot;270A5970-D3CE-4C4D-86C0-86BC9E526AA3&quot; /&gt;
+&lt;img src=&quot;../assets/images/2017-05-26-semantic-segmentation/E19801B2-2B12-443A-BB57-C9786F9AFF16.png&quot; alt=&quot;E19801B2-2B12-443A-BB57-C9786F9AFF16&quot; /&gt;&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Cityscapes的图片非常大，作者一开始先缩小了一半再训练的，但后来发现用原始大小的图片训练能提高1.9%，效果很明显（但我感觉缩小一半对于细节的损失并不是很大因为原始图片有2048*1024，可能是因为训练量上升了？）。作者的处理方法是把原始图片分割成几张有重叠区域的图片再训练，训练好了拼起来。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Failure Modes，作者发现他们的模型难以抓住复杂的边界，如下图，甚至可能会被CRF完全抹掉，因为因为DCNN算出来的东西不够自信（零星、稀疏）。作者看好encoder-decoder结构能够解决这个问题
+&lt;img src=&quot;../assets/images/2017-05-26-semantic-segmentation/E7E2AC8F-283B-4374-B92F-2928E8E0C857.png&quot; alt=&quot;E7E2AC8F-283B-4374-B92F-2928E8E0C857&quot; /&gt;&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&quot;faster-r-cnntowards-real-time-object-detection-with-region-proposal-networks&quot;&gt;Faster R-CNN:Towards Real-Time Object Detection with Region Proposal Networks&lt;/h2&gt;
+
+&lt;p&gt;目标检测近来的发展得益于region proposal methods和region-based convolutional nueral networks的成功。RPM负责给出粗略的语义分割，而R-CNN负责精细化的检测。Fast R-CNN已经得到了几乎实时的运行时间，而现在瓶颈就在于计算RPM，本文的目标就是使用RPN来突破该瓶颈，达到实时目标检测。这篇论文提出了RPN代替了常用的Region proposal methods,负责给出粗略的语义分割。&lt;/p&gt;
+
+&lt;p&gt;主要的原理是共享卷积层。作者们发现region-based detectors（比如Fast R-CNN）使用的卷积层产生的特征，也可以用来生成region proposals。&lt;/p&gt;
+
+&lt;h4 id=&quot;rpn的构建&quot;&gt;RPN的构建&lt;/h4&gt;
+
+&lt;p&gt;为了共享卷积，作者考察了ZF model（5层共享卷积）和SZ model（VGG，13层共享卷积层）&lt;/p&gt;
+
+&lt;p&gt;为了生成region proposals，作者在最后一个共享卷积层输出的特征层上做slide window。把一个window里的通过一个全连接层，生成一个低维向量。这个向量接着再被喂进两个平行的全连接层，分别用于矩形定位和矩形分类打分。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;../assets/images/2017-05-26-semantic-segmentation/E31B36A8-B635-46F8-A51D-F7154C75DDC8.png&quot; alt=&quot;E31B36A8-B635-46F8-A51D-F7154C75DDC8&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;实际上这个slide window就是个卷积，后面的两层也是卷积层。对于每个window会提出k个region proposal。作者说这个方法有个很重要的属性是translation invariant（平移不变性，平移后仍能预测出相同大小的anchor boxes）。&lt;/p&gt;
+
+&lt;h4 id=&quot;rpn的学习过程&quot;&gt;RPN的学习过程&lt;/h4&gt;
+
+&lt;p&gt;有着最大IOU或与所有goud-truth box 的IOU都大于70%的anchor会被赋予正标签；&lt;/p&gt;
+
+&lt;p&gt;与所有ground-truth box的IOU都小于30%的anchor会被赋予负例；&lt;/p&gt;
+
+&lt;p&gt;其他的anchor不会对训练有贡献。Loss function如下&lt;/p&gt;
+
+&lt;h4 id=&quot;lp_i-t_i--frac1n_clssigma_il_clsp_i-p_i--lambda-frac1n_reg-sigma_i-p_i-l_regt_i-t_i&quot;&gt;&lt;script type=&quot;math/tex&quot;&gt;L(p_i, t_i) = \frac1{N_{cls}}\Sigma_iL_{cls}(p_i, p_i^*) + \lambda \frac1{N_{reg}} \Sigma_i p_i^* L_{reg}(t_i, t_i^*)&lt;/script&gt;&lt;/h4&gt;
+
+&lt;p&gt;i是anchor的index，&lt;script type=&quot;math/tex&quot;&gt;p_i&lt;/script&gt; 是anchor i被预测为是一个物体的概率，&lt;script type=&quot;math/tex&quot;&gt;p^*_i&lt;/script&gt; 是ground-truth（如果anchor是positive则为1，否则为0），&lt;script type=&quot;math/tex&quot;&gt;t_i&lt;/script&gt; 是表示box四个坐标的参数向量，&lt;script type=&quot;math/tex&quot;&gt;t^*_I&lt;/script&gt; 是ground-truth。&lt;script type=&quot;math/tex&quot;&gt;L_{cls}&lt;/script&gt; 是log loss（Softmax分类器)，&lt;script type=&quot;math/tex&quot;&gt;L_{reg}(t_i, t_i^*)=R(t_i - t_i^*)&lt;/script&gt; ，&lt;script type=&quot;math/tex&quot;&gt;R&lt;/script&gt; 是robust loss function(smooth L1) (==&lt;strong&gt;这是啥&lt;/strong&gt;==)。因为&lt;script type=&quot;math/tex&quot;&gt;p^*_i&lt;/script&gt; ，第二项只有正例的时候才会起作用。&lt;script type=&quot;math/tex&quot;&gt;\lambda&lt;/script&gt; 是一个平衡系数。&lt;/p&gt;
+
+&lt;h4 id=&quot;优化&quot;&gt;优化&lt;/h4&gt;
+
+&lt;p&gt;每个mini-batch都来自于同一张图片，随机取128个正例和128个负例，如果不够128个正例，就用负例填上&lt;/p&gt;
+
+&lt;h4 id=&quot;共享卷积特征&quot;&gt;共享卷积特征&lt;/h4&gt;
+
+&lt;p&gt;共享卷积特征存在这一个困难，Fast R-CNN的训练是基于固定的region proposals的，所以没法直接训练联合模型。而且不知道联合训练是否能让共享卷积层收敛。所以作者提出了按如下步骤训练的方法。&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;训练RPN，用ImageNet预训练的模型fine-tune。&lt;/li&gt;
+  &lt;li&gt;训练Fast R-CNN，使用第1步中RPN生成的proposals，到现在为止没有共享卷积层&lt;/li&gt;
+  &lt;li&gt;用Fast R-CNN初始化RPN的训练，但是只fine-tune RPN自己的层，不更改共享的卷积层&lt;/li&gt;
+  &lt;li&gt;fine-tune Fast R-CNN的fc层，也不更改共享的卷积层&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;也就是说卷积层没被联合训练过。&lt;/p&gt;
+
+&lt;h4 id=&quot;实现细节&quot;&gt;实现细节&lt;/h4&gt;
+
+&lt;p&gt;许多RPN proposals高度重叠，作者使用了名为non-maximum suppression（NMS）的技术，NMS大大降低了proposal的数量而没有损害检测精度。&lt;/p&gt;
+
+&lt;h4 id=&quot;实验&quot;&gt;实验&lt;/h4&gt;
+
+&lt;p&gt;下面是几种技术对于结果的影响的比较&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;../assets/images/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 上午11.14.58.png&quot; alt=&quot;屏幕快照 2017-05-26 上午11.14.58&quot; /&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;deformable-convolutional-networks&quot;&gt;Deformable Convolutional Networks&lt;/h3&gt;
+
+&lt;p&gt;视觉识别中一个很大的问题在于图像的变形（角度、大小、姿势等）。以往的训练都是通过增加数据来使网络熟悉各种变形或使用一些形变时不变的特征（像是SIFT, scale invariant feature transform）。这篇论文提出CNN需要专门针对变形的结构才能较好的解决这个问题，因此提出了deformable convolution。&lt;/p&gt;
+
+&lt;h4 id=&quot;deformable-convolution&quot;&gt;Deformable Convolution&lt;/h4&gt;
+
+&lt;p&gt;基本思想是改变卷积层的核，原来核是一个方形，现在对于核中每个元素加上一个offset，卷积后的特征不再来源于一个方形，而可能来源于各种形状。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;../assets/images/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 下午1.20.54.png&quot; alt=&quot;屏幕快照 2017-05-26 下午1.20.54&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;原来的卷积公式是这样子：&lt;/p&gt;
+
+&lt;h4 id=&quot;yp_0--sigma_p_n-wp_n-cdot-xp_0p_n&quot;&gt;&lt;script type=&quot;math/tex&quot;&gt;y(p_0) = \Sigma_{p_n} w(p_n) \cdot x(p_0+p_n)&lt;/script&gt;&lt;/h4&gt;
+
+&lt;p&gt;加上偏移量&lt;script type=&quot;math/tex&quot;&gt;\Delta p_n&lt;/script&gt; 后变成这个样子：&lt;/p&gt;
+
+&lt;h4 id=&quot;yp_0--sigma_p_n-wp_n-cdot-xp_0p_n-delta-p_n&quot;&gt;&lt;script type=&quot;math/tex&quot;&gt;y(p_0) = \Sigma_{p_n} w(p_n) \cdot x(p_0+p_n+ \Delta p_n)&lt;/script&gt;&lt;/h4&gt;
+
+&lt;p&gt;但因为偏移量常常是小数，所以要用双线性插值找到偏移后的坐标最接近的整数位置，公式略。&lt;/p&gt;
+
+&lt;h4 id=&quot;deformable-roi-pooling&quot;&gt;Deformable RoI Pooling&lt;/h4&gt;
+
+&lt;p&gt;RoI pooling是将一个任意大小的图片转化为固定大小输出的池化。池化函数是bin内的平均值。原始公式是&lt;/p&gt;
+
+&lt;h4 id=&quot;yij--sigma_p-xp_0--p--n_ij&quot;&gt;&lt;script type=&quot;math/tex&quot;&gt;y(i,j) = \Sigma_{p} x(p_0 + p) / n_{ij}&lt;/script&gt;&lt;/h4&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;p_0&lt;/script&gt; 是bin的左上角，p是枚举位置，&lt;script type=&quot;math/tex&quot;&gt;n_{ij}&lt;/script&gt; 是bin内的元素总数， 加上偏移量后&lt;/p&gt;
+
+&lt;h4 id=&quot;yij--sigma_p-xp_0--p-delta-p_ij--n_ij&quot;&gt;&lt;script type=&quot;math/tex&quot;&gt;y(i,j) = \Sigma_{p} x(p_0 + p +\Delta p_{ij}) / n_{ij}&lt;/script&gt;&lt;/h4&gt;
+
+&lt;p&gt;偏移量的学习学习的是相对系数（图片大小的百分比），这样能够适用于不同大小的图片。&lt;/p&gt;
+
+&lt;p&gt;还可以扩展到position-sensitive RoI pooling，&lt;strong&gt;==（这里不太清楚，以后再看）==&lt;/strong&gt;&lt;/p&gt;
+
+&lt;h4 id=&quot;理解deformable-convnets&quot;&gt;理解Deformable ConvNets&lt;/h4&gt;
+
+&lt;p&gt;下图是使用了的deformable conv后感受野的变化&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;../assets/images/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 下午8.27.21.png&quot; alt=&quot;屏幕快照 2017-05-26 下午8.27.21&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;而且因为核具有自己调整的特性，可以轻松识别出不同scale的物体，下图展示了这一特性，每张图片中的红点是三层卷积对应的感受野，绿点是最高层的中心&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;../assets/images/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 下午8.30.40.png&quot; alt=&quot;屏幕快照 2017-05-26 下午8.30.40&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;对于RoI也是类似的效果，黄框的分数是由红框的平均值计算来的&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;../assets/images/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 下午8.30.49.png&quot; alt=&quot;屏幕快照 2017-05-26 下午8.30.49&quot; /&gt;&lt;/p&gt;
+
+&lt;h4 id=&quot;与相关工作的对比&quot;&gt;与相关工作的对比&lt;/h4&gt;
+
+&lt;p&gt;有几个有趣的点&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Effective Receptive Field这里提到，感受野虽然理论上随着层数线性增长，但实际上是成根号增长的，比预期的慢很多，因此即使是顶层的单元感受野也很小。因此Atrous Conv由于其有效增加感受野得到了广泛的应用&lt;/li&gt;
+  &lt;li&gt;之前也有动态filter的研究，但都只是值的变化而不是位置的变化&lt;/li&gt;
+  &lt;li&gt;当多层卷积结合起来以后，可能会有着跟deformable conv类似的效果，但存在着本质上的不同。经过复杂学习后得到的东西如果换一种思考方式就变得意外简单。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h4 id=&quot;实验-1&quot;&gt;实验&lt;/h4&gt;
+
+&lt;p&gt;几种网络应用了deformable conv后的效果比较：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;../assets/images/2017-05-26-semantic-segmentation/屏幕快照 2017-05-26 下午8.59.34.png&quot; alt=&quot;屏幕快照 2017-05-26 下午8.59.34&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;不知道为什么Faster R-CNN的提升效果最差（可能是RPN），而DeepLab应用6层deformable conv后效果反而变差了（猜测是感受野过大，容易分散，或在某些特征点收敛，过于集中，太关注于局部信息）&lt;/p&gt;
+
+&lt;h4 id=&quot;aligned-inception-resnet&quot;&gt;Aligned-Inception-ResNet&lt;/h4&gt;
+
+&lt;p&gt;&lt;strong&gt;==这个网络还需要学习一下==&lt;/strong&gt;&lt;/p&gt;
+
+&lt;h4 id=&quot;感想&quot;&gt;感想&lt;/h4&gt;
+
+&lt;p&gt;感觉这篇论文的想法非常秒，很优雅。在知乎上看到一句话，ALAN Huang说的，感觉非常有启发性&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;conv，pooling这种操作，其实可以分成三阶段： indexing（im2col） ，reduce(sum), reindexing（col2im). 在每一阶段都可以做一些事情。 用data driven的方式去学每一阶段的参数，也是近些年的主流方向。&lt;/p&gt;
+&lt;/blockquote&gt;</content><author><name>Tianhao Wei</name></author><summary type="html">没啥好说的。</summary></entry><entry><title type="html">正在施工</title><link href="http://localhost:4000/blog/%E9%9A%8F%E7%AC%94/2017/05/25/welcome-to-jekyll.html" rel="alternate" type="text/html" title="正在施工" /><published>2017-05-25T12:27:42-04:00</published><updated>2017-05-25T12:27:42-04:00</updated><id>http://localhost:4000/blog/%E9%9A%8F%E7%AC%94/2017/05/25/welcome-to-jekyll</id><content type="html" xml:base="http://localhost:4000/blog/%E9%9A%8F%E7%AC%94/2017/05/25/welcome-to-jekyll.html">&lt;p&gt;刚开通的博客，还在施工ˊ_&amp;gt;ˋ&lt;/p&gt;</content><author><name>Tianhao Wei</name></author><summary type="html">刚开通的博客，还在施工ˊ_&amp;gt;ˋ</summary></entry></feed>
