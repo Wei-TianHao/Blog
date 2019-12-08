@@ -10,7 +10,7 @@ tags: meta-learning long-read
 
 <!--more-->
 
-**本文翻译自[Lilian](https://lilianweng.github.io/lil-log/2018/11/30/meta-learning.html)的英文博客，Lilian的博客质量非常高，大家多多关注~**
+**本文翻译自[Lilian](https://lilianweng.github.io/lil-log/2018/11/30/meta-learning.html)的英文博客，Lilian的博客质量非常高，向大家强烈安利~**
 
 好的机器学习模型经常需要大量的数据来进行训练，但人却恰恰相反。小孩子看过一两次喵喵和小鸟后就能分辨出他们的区别。会骑自行车的人很快就能学会骑摩托车，有时候甚至不用人教。那么有没有可能让机器学习模型也具有相似的性质呢？如何才能让模型仅仅用少量的数据就学会新的概念和技能呢？这就是**元学习**要解决的问题。
 
@@ -400,33 +400,29 @@ for $$ j=1, \dots, L $$ :
 5. 根据 $$ \mathcal{L}_\text{train} $$ 更新所有参数 $$ (\theta, \phi, w, v) $$ .
 
 
-## Optimization-Based
+## 基于优化的方法
 
-Deep learning models learn through backpropagation of gradients. However, the gradient-based optimization is neither designed to cope with a small number of training samples, nor to converge within a small number of optimization steps. Is there a way to adjust the optimization algorithm so that the model can be good at learning with a few examples? This is what optimization-based approach meta-learning algorithms intend for.
-
+深度学习模型通过反向传播梯度进行学习。然后基于梯度的优化方法并不适用于仅有少量训练样本的情况，也很难在短短几步之内达到收敛。那怎样才能调整现有的优化算法使得模型能够在仅有少量样本的情况下学好呢？这就是基于优化的元学习算法的目标。
 
 ### LSTM Meta-Learner
 
-The optimization algorithm can be explicitly modeled. [Ravi & Larochelle (2017)](https://openreview.net/pdf?id=rJY0-Kcll) did so and named it "meta-learner", while the original model for handling the task is called "learner". The goal of the meta-learner is to efficiently update the learner's parameters using a small support set so that the learner can adapt to the new task quickly.
+[Ravi & Larochelle (2017)](https://openreview.net/pdf?id=rJY0-Kcll) 把优化算法显式的建模出来，并命名为“元学习器”，原本处理任务的模型被称为“学习器”。元学习器的目标是使用少量支持集在仅仅几步之内快速更新学习器的参数，使得学习器能够快速适应新任务。
 
-Let's denote the learner model as $$ M_\theta $$ parameterized by $$ \theta $$ , the meta-learner as $$ R_\Theta $$ with parameters $$ \Theta $$ , and the loss function $$ \mathcal{L} $$ .
+我们用 $$ M_\theta $$ 代表参数为 $$ \theta $$ 的学习器，用 $$ R_\Theta $$ 代表参数为 $$ \Theta $$ 的元学习器，loss函数为 $$ \mathcal{L} $$ .
 
+#### 为什么使用 LSTM？
 
-#### Why LSTM?
+之所以使用 LSTM 作为元学习器的模型，有这样几点原因：
+1. 反向传播中基于梯度的更新跟 LSTM 中 cell 状态的更新有相似之处。
+2. 知道之前的梯度对当前的梯度更新有好处。可以参考 [momentum](http://ruder.io/optimizing-gradient-descent/index.html#momentum) 的原理。 
 
-The meta-learner is modeled as a LSTM, because:
-1. There is similarity between the gradient-based update in backpropagation and the cell-state update in LSTM.
-2. Knowing a history of gradients benefits the gradient update; think about how [momentum](http://ruder.io/optimizing-gradient-descent/index.html#momentum) works. 
-
-
-The update for the learner's parameters at time step t with a learning rate $$ \alpha_t $$ is:
-
+第t步时，设定学习率为$$ \alpha_t $$，更新学习器的参数：
+ 
  $$ 
 \theta_t = \theta_{t-1} - \alpha_t \nabla_{\theta_{t-1}}\mathcal{L}_t
  $$ 
 
-
-It has the same form as the cell state update in LSTM, if we set forget gate $$ f_t=1 $$ , input gate $$ i_t = \alpha_t $$ , cell state $$ c_t = \theta_t $$ , and new cell state $$ \tilde{c}_t = -\nabla_{\theta_{t-1}}\mathcal{L}_t $$ :
+这个过程跟 LSTM 的 cell 状态更新具有相同的形式。如果我们令遗忘门 $$ f_t=1 $$，输入门 $$ i_t = \alpha_t $$， cell 状态 $$ c_t = \theta_t $$ , 新 cell 状态 $$ \tilde{c}_t = -\nabla_{\theta_{t-1}}\mathcal{L}_t $$，则：
 
  $$ 
 \begin{aligned}
@@ -436,7 +432,7 @@ c_t &= f_t \odot c_{t-1} + i_t \odot \tilde{c}_t\\
  $$ 
 
 
-While fixing $$ f_t=1 $$ and $$ i_t=\alpha_t $$ might not be the optimal, both of them can be learnable and adaptable to different datasets.
+但是固定 $$ f_t=1 $$ 和 $$ i_t=\alpha_t $$ 可能并不是最好的，我们可以让他们随数据集变化而变化，由学习得到。
 
  $$ 
 \begin{aligned}
@@ -452,15 +448,13 @@ i_t &= \sigma(\mathbf{W}_i \cdot [\nabla_{\theta_{t-1}}\mathcal{L}_t, \mathcal{L
 
 ![lstm-meta-learner]({{ '/assets/images/2019-09-19-meta-learning/lstm-meta-learner.png' | relative_url }})
 {: style="width: 100%;" class="center"}
-*Fig.10. How the learner $$ M_\theta $$ and the meta-learner $$ R_\Theta $$ are trained. (图像来源：[原论文](https://openreview.net/pdf?id=rJY0-Kcll) with more annotations)*
+*Fig.10. 如何训练学习器 $$ M_\theta $$ 和元学习器 $$ R_\Theta $$. (图像来源：[原论文](https://openreview.net/pdf?id=rJY0-Kcll)中的图片加了一些注释)*
 
+在[Matching Networks](#matching-networks)中我们已经证明了用模仿测试过程的方式训练能够取得很好的效果，这里也用了类似的方法。在每个训练阶段，我们先采样一个数据集 $$ \mathcal{D} = (\mathcal{D}_\text{train}, \mathcal{D}_\text{test}) \in \hat{\mathcal{D}}_\text{meta-train} $$，再从 $$ \mathcal{D}_\text{train} $$ 中采样 $$T$$ 轮 mini-batches 用于更新 $$\theta$$。学习器参数的最终状态$$ \theta_T $$被用来在测试数据 $$ \mathcal{D}_\text{test} $$ 上训练元学习器。
 
-The training process mimics what happens during test, since it has been proved to be beneficial in [Matching Networks](#matching-networks). During each training epoch, we first sample a dataset $$ \mathcal{D} = (\mathcal{D}_\text{train}, \mathcal{D}_\text{test}) \in \hat{\mathcal{D}}_\text{meta-train} $$ and then sample mini-batches out of $$ \mathcal{D}_\text{train} $$ to update $$ \theta $$ for $$ T $$ rounds. The final state of the learner parameter $$ \theta_T $$ is used to train the meta-learner on the test data $$ \mathcal{D}_\text{test} $$ .
-
-
-Two implementation details to pay extra attention to:
-1. How to compress the parameter space in LSTM meta-learner? As the meta-learner is modeling parameters of another neural network, it would have hundreds of thousands of variables to learn. Following the [idea](https://arxiv.org/abs/1606.04474) of sharing parameters across coordinates, 
-2. To simplify the training process, the meta-learner assumes that the loss $$ \mathcal{L}_t $$ and the gradient $$ \nabla_{\theta_{t-1}} \mathcal{L}_t $$ are independent.
+有两个实现的细节需要注意一下：
+1. 如何压缩 LSTM 元学习的参数空间？元学习器是在建模一个神经网络的参数，所以有上百万个变量要学。为了减小元学习器的参数空间，这篇文章借鉴了[共享参数](https://arxiv.org/abs/1606.04474)的方法。元学习器本质上学习的是一种更新原则，即如何根据一个参数的值和其梯度生成这个参数的新值（比如一阶方法，牛顿法等），与参数在学习器中的位置无关。所以我们可以假设所有参数的更新原则都是一样的，即元学习只需要输出一维变量即可。
+2. 为了简化训练过程，元学习器假设 loss $$ \mathcal{L}_t $$ 和梯度 $$ \nabla_{\theta_{t-1}} \mathcal{L}_t $$ 是独立的。
 
 
 ![train-meta-learner]({{ '/assets/images/2019-09-19-meta-learning/train-meta-learner.png' | relative_url }})
@@ -469,23 +463,24 @@ Two implementation details to pay extra attention to:
 
 ### MAML
 
-**MAML**, short for **Model-Agnostic Meta-Learning** ([Finn, et al. 2017](https://arxiv.org/abs/1703.03400)) is a fairly general optimization algorithm, compatible with any model that learns through gradient descent.
+**Model-Agnostic Meta-Learning** 简称 **MAML** ([Finn, et al. 2017](https://arxiv.org/abs/1703.03400))， 是一种非常通用的优化算法，可以被用于任何基于梯度下降学习的模型。
 
-Let's say our model is $$ f_\theta $$ with parameters $$ \theta $$ . Given a task $$ \tau_i $$ and its associated dataset $$ (\mathcal{D}^{(i)}_\text{train}, \mathcal{D}^{(i)}_\text{test}) $$ , we can update the model parameters by one or more gradient descent steps (the following example only contains one step):
+假设我们的模型是 $$ f_\theta $$，参数为 $$ \theta $$。给定一个任务 $$ \tau_i $$ 
+
+假设我们的模型是 $$ f_\theta $$，参数为 $$ \theta $$。给定一个任务 $$ \tau_i $$ 和其相应的数据集 $$ (\mathcal{D}^{(i)}_\text{train}, \mathcal{D}^{(i)}_\text{test}) $$，我们可以对模型参数进行一次或多次梯度下降。（下式中只进行了一次迭代）：
 
  $$ 
 \theta'_i = \theta - \alpha \nabla_\theta\mathcal{L}^{(0)}_{\tau_i}(f_\theta)
  $$ 
 
-where $$ \mathcal{L}^{(0)} $$ is the loss computed using the mini data batch with id (0).
+其中 $$ \mathcal{L}^{(0)} $$ 是由编号为0的小数据batch算得的loss。
 
 
 ![MAML]({{ '/assets/images/2019-09-19-meta-learning/maml.png' | relative_url }})
 {: style="width: 45%;" class="center"}
-*Fig. 11. Diagram of MAML. (图像来源：[原论文](https://arxiv.org/abs/1703.03400))*
+*Fig. 11. MAML图示。 (图像来源：[原论文](https://arxiv.org/abs/1703.03400))*
 
-
-Well, the above formula only optimizes for one task. To achieve a good generalization across a variety of tasks, we would like to find the optimal $$ \theta^* $$ so that the task-specific fine-tuning is more efficient. Now, we sample a new data batch with id (1) for updating the meta-objective. The loss, denoted as $$ \mathcal{L}^{(1)} $$ , depends on the mini batch (1). The superscripts in $$ \mathcal{L}^{(0)} $$ and $$ \mathcal{L}^{(1)} $$ only indicate different data batches, and they refer to the same loss objective for the same task.
+当然，上面这个式子只针对一个特定的任务进行了优化。而MAML为了能够更好地扩展到一系列任务上，我们想要寻找一个在给定任意任务后**微调过程最高效**的 $$ \theta^* $$。现在，假设我们采样了一个编号为1的数据batch用于更新元目标。对应的loss记为 $$ \mathcal{L}^{(1)} $$。$$ \mathcal{L}^{(0)} $$ 和 $$ \mathcal{L}^{(1)} $$的上标只代表着数据batch不同，他们都是同一个目标方程计算得到的。那么
 
  $$ 
 \begin{aligned}
@@ -498,14 +493,14 @@ Well, the above formula only optimizes for one task. To achieve a good generaliz
 
 ![MAML Algorithm]({{ '/assets/images/2019-09-19-meta-learning/maml-algo.png' | relative_url }})
 {: style="width: 60%;" class="center"}
-*Fig. 12. The general form of MAML algorithm. (图像来源：[原论文](https://arxiv.org/abs/1703.03400))*
+*Fig. 12. MAML算法的一般形式。 (图像来源：[原论文](https://arxiv.org/abs/1703.03400))*
 
 
 #### First-Order MAML
 
-The meta-optimization step above relies on second derivatives. To make the computation less expensive, a modified version of MAML omits second derivatives, resulting in a simplified and cheaper implementation, known as **First-Order MAML (FOMAML)**.
+上面的元优化过程依赖于二阶导数（多次迭代）。而为了加快计算，简化实现过程，一个忽略了二阶项的简化版MAML被提出了，称为 **First-Order MAML (FOMAML)**。
 
-Let's consider the case of performing $$ k $$ inner gradient steps, $$ k\geq1 $$ . Starting with the initial model parameter $$ \theta_\text{meta} $$ :
+让我们来考虑一下执行 $$ k $$ 次内循环（微调过程）梯度下降的过程（$$ k\geq1 $$）。假设一开始的模型参数为 $$ \theta_\text{meta} $$ ：
 
  $$ 
 \begin{aligned}
@@ -517,12 +512,12 @@ Let's consider the case of performing $$ k $$ inner gradient steps, $$ k\geq1 $$
 \end{aligned}
  $$ 
 
-Then in the outer loop, we sample a new data batch for updating the meta-objective.
+ 而在外循环中，我们采样一个新的数据batch用于更新元目标。
 
  $$ 
 \begin{aligned}
 \theta_\text{meta} &\leftarrow \theta_\text{meta} - \beta g_\text{MAML} & \scriptstyle{\text{; update for meta-objective}} \\[2mm]
-\text{where } g_\text{MAML}
+\text{其中 } g_\text{MAML}
 &= \nabla_{\theta} \mathcal{L}^{(1)}(\theta_k) &\\[2mm]
 &= \nabla_{\theta_k} \mathcal{L}^{(1)}(\theta_k) \cdot (\nabla_{\theta_{k-1}} \theta_k) \dots (\nabla_{\theta_0} \theta_1) \cdot (\nabla_{\theta} \theta_0) & \scriptstyle{\text{; following the chain rule}} \\
 &= \nabla_{\theta_k} \mathcal{L}^{(1)}(\theta_k) \cdot \prod_{i=1}^k \nabla_{\theta_{i-1}} \theta_i &  \\
@@ -531,13 +526,13 @@ Then in the outer loop, we sample a new data batch for updating the meta-objecti
 \end{aligned}
  $$ 
 
-The MAML gradient is:
+MAML的梯度是：
 
  $$ 
 g_\text{MAML} = \nabla_{\theta_k} \mathcal{L}^{(1)}(\theta_k) \cdot \prod_{i=1}^k (I - \alpha \color{red}{\nabla_{\theta_{i-1}}(\nabla_\theta\mathcal{L}^{(0)}(\theta_{i-1}))})
  $$ 
 
-The First-Order MAML ignores the second derivative part in red. It is simplified as follows, equivalent to the derivative of the last inner gradient update result.
+一阶 MAML 忽略了用红色标记的二阶导数部分。它被简化为了下式，等价于最后一次内循环梯度更新的结果。
 
  $$ 
 g_\text{FOMAML} = \nabla_{\theta_k} \mathcal{L}^{(1)}(\theta_k)
@@ -546,29 +541,27 @@ g_\text{FOMAML} = \nabla_{\theta_k} \mathcal{L}^{(1)}(\theta_k)
 
 ### Reptile
 
-**Reptile** ([Nichol, Achiam & Schulman, 2018](https://arxiv.org/abs/1803.02999)) is a remarkably simple meta-learning optimization algorithm. It is similar to MAML in many ways, given that both rely on meta-optimization through gradient descent and both are model-agnostic.
+**Reptile** ([Nichol, Achiam & Schulman, 2018](https://arxiv.org/abs/1803.02999)) 是一个超级简单的元学习优化算法。它跟 MAML 类似，它们都靠梯度下降进行元优化，而且都是模型无关的算法。
 
-The Reptile works by repeatedly:
-* 1) sampling a task, 
-* 2) training on it by multiple gradient descent steps, 
-* 3) and then moving the model weights towards the new parameters. 
+Reptiled 的执行流程如下:
+* 1) 采样一个任务, 
+* 2) 在这个任务上进行多次梯度下降 
+* 3) 把模型参数向新参数靠近
 
-See the algorithm below:
- $$ \text{SGD}(\mathcal{L}_{\tau_i}, \theta, k) $$ performs stochastic gradient update for k steps on the loss $$ \mathcal{L}_{\tau_i} $$ starting with initial parameter $$ \theta $$ and returns the final parameter vector. The batch version samples multiple tasks instead of one within each iteration. The reptile gradient is defined as $$ (\theta - W)/\alpha $$ , where $$ \alpha $$ is the stepsize used by the SGD operation.
-
+如下图中算法所示：
+ 给定初始参数 $$ \theta $$，$$ \text{SGD}(\mathcal{L}_{\tau_i}, \theta, k) $$ 根据 loss $$ \mathcal{L}_{\tau_i} $$ 进行 $k$ 次随机梯度下降，之后返回参数向量。带batch的版本则每次采样多个任务。Reptile的梯度定义为 $$ (\theta - W)/\alpha $$，其中 $$ \alpha $$ 是 SGD 所使用的步长。
 
 ![Reptile Algorithm]({{ '/assets/images/2019-09-19-meta-learning/reptile-algo.png' | relative_url }})
 {: style="width: 52%;" class="center"}
-*Fig. 13. The batched version of Reptile algorithm. (图像来源：[原论文](https://arxiv.org/abs/1803.02999))*
+*Fig. 13. Batch 版本的 Reptile 算法. (图像来源：[原论文](https://arxiv.org/abs/1803.02999))*
 
-
-At a glance, the algorithm looks a lot like an ordinary SGD. However, because the task-specific optimization can take more than one step. it eventually makes $$ \text{SGD}(\mathbb{E}
-_\tau[\mathcal{L}_{\tau}], \theta, k) $$ diverge from $$ \mathbb{E}_\tau [\text{SGD}(\mathcal{L}_{\tau}, \theta, k)] $$ when k > 1.
+一眼看上去，这个算法跟普通的 SGD 很像。但是，因为内循环里的梯度下降可以发生好多次，使得 $$ \text{SGD}(\mathbb{E}
+_\tau[\mathcal{L}_{\tau}], \theta, k) $$ 与 $$ \mathbb{E}_\tau [\text{SGD}(\mathcal{L}_{\tau}, \theta, k)] $$ 在 k > 1 时产生了区别。
 
 
 #### The Optimization Assumption
 
-Assuming that a task $$ \tau \sim p(\tau) $$ has a manifold of optimal network configuration, $$ \mathcal{W}_{\tau}^* $$ . The model $$ f_\theta $$ achieves the best performance for task $$ \tau $$ when $$ \theta $$ lays on the surface of $$ \mathcal{W}_{\tau}^* $$ . To find a solution that is good across tasks, we would like to find a parameter close to all the optimal manifolds of all tasks:
+假设任务 $$ \tau \sim p(\tau) $$ 有一个最优的模型参数空间构成的流形 $$ \mathcal{W}_{\tau}^* $$ 。 当参数 $$ \theta $$ 处于这个流形 $$ \mathcal{W}_{\tau}^* $$ 上面的时候，模型 $$ f_\theta $$ 能够在任务 $$ \tau $$ 上达到最好的效果。为了找到一个对于所有任务都足够好的模型，我们想要找一个靠近所有任务的最优流形的参数，即：
 
  $$ 
 \theta^* = \arg\min_\theta \mathbb{E}_{\tau \sim p(\tau)} [\frac{1}{2} \text{dist}(\theta, \mathcal{W}_\tau^*)^2]
@@ -577,17 +570,16 @@ Assuming that a task $$ \tau \sim p(\tau) $$ has a manifold of optimal network c
 
 ![Reptile Algorithm]({{ '/assets/images/2019-09-19-meta-learning/reptile-optim.png' | relative_url }})
 {: style="width: 50%;" class="center"}
-*Fig. 14. The Reptile algorithm updates the parameter alternatively to be closer to the optimal manifolds of different tasks. (图像来源：[原论文](https://arxiv.org/abs/1803.02999))*
+*Fig. 14. 为了靠近不同任务的最优流形，Reptile 算法在交替更新参数。 (图像来源：[原论文](https://arxiv.org/abs/1803.02999))*
 
-
-Let's use the L2 distance as $$ \text{dist}(.) $$ and the distance between a point $$ \theta $$ and a set $$ \mathcal{W}_\tau^* $$ equals to the distance between $$ \theta $$ and a point $$ W_{\tau}^*(\theta) $$ on the manifold that is closest to $$ \theta $$ :
+我们设 $$ \text{dist}(.) $$ 为 L2 距离，并定义一个点 $$ \theta $$ 和一个集合 $$ \mathcal{W}_\tau^* $$ 之间的距离等价于 $$ \theta $$ 和一个该流形上最接近 $$ \theta $$ 的点 $$ W_{\tau}^*(\theta) $$ 的距离。
 
  $$ 
 \text{dist}(\theta, \mathcal{W}_{\tau}^*) = \text{dist}(\theta, W_{\tau}^*(\theta)) \text{, where }W_{\tau}^*(\theta) = \arg\min_{W\in\mathcal{W}_{\tau}^*} \text{dist}(\theta, W)
  $$ 
 
 
-The gradient of the squared euclidean distance is:
+欧拉距离平方的梯度为：
 
  $$ 
 \begin{aligned}
@@ -598,20 +590,20 @@ The gradient of the squared euclidean distance is:
 \end{aligned}
  $$ 
 
-Notes: According to the Reptile paper, "*the gradient of the squared euclidean distance between a point Θ and a set S is the vector 2(Θ − p), where p is the closest point in S to Θ*". Technically the closest point in S is also a function of Θ, but I'm not sure why the gradient does not need to worry about the derivative of p. (Please feel free to leave me a comment or send me an email about this if you have ideas.)
+注意：根据原论文，“*一个点 Θ 和一个集合 S 的欧拉距离平方的梯度为 2(Θ − p)，其中 p 是 S 中离 Θ 最近的点*"。理论上来说，S 中最靠近 Θ 的点应该也是一个 Θ 的函数，但我不确定为什么计算梯度的时候不需要担心 p 的导数。(如果有什么想法欢迎讨论。)
 
-Thus the update rule for one stochastic gradient step is:
+因此，一个随机梯度下降的更新步骤为：
 
  $$ 
 \theta = \theta - \alpha \nabla_\theta[\frac{1}{2} \text{dist}(\theta, \mathcal{W}_{\tau_i}^*)^2] = \theta - \alpha(\theta - W_{\tau_i}^*(\theta)) = (1-\alpha)\theta + \alpha W_{\tau_i}^*(\theta)
  $$ 
 
-The closest point on the optimal task manifold $$ W_{\tau_i}^*(\theta) $$ cannot be computed exactly, but Reptile approximates it using $$ \text{SGD}(\mathcal{L}_\tau, \theta, k) $$ .
+虽然很难精确计算出任务最优流形上的最近点 $$ W_{\tau_i}^*(\theta) $$ ，但Reptile 可以根据 $$ \text{SGD}(\mathcal{L}_\tau, \theta, k) $$ 拟合出来。
 
 
 #### Reptile vs FOMAML
 
-To demonstrate the deeper connection between Reptile and MAML, let's expand the update formula with an example performing two gradient steps, k=2 in $$ \text{SGD}(.) $$ . Same as defined [above](#maml), $$ \mathcal{L}^{(0)} $$ and $$ \mathcal{L}^{(1)} $$ are losses using different mini-batches of data. For ease of reading, we adopt two simplified annotations: $$ g^{(i)}_j = \nabla_{\theta} \mathcal{L}^{(i)}(\theta_j) $$ and $$ H^{(i)}_j = \nabla^2_{\theta} \mathcal{L}^{(i)}(\theta_j) $$ .
+为了说明 Reptile 和 MAML 的深层联系，我们用一个做了两步梯度下降的更新公式做例子，即 $$ \text{SGD}(.) $$ 中 k=2。 和[上面](#maml)定义的一样，$$ \mathcal{L}^{(0)} $$ 和 $$ \mathcal{L}^{(1)} $$ 只是不太batch对应的loss。为了方便阅读，我们使用两个记号：$$ g^{(i)}_j = \nabla_{\theta} \mathcal{L}^{(i)}(\theta_j) $$ 和 $$ H^{(i)}_j = \nabla^2_{\theta} \mathcal{L}^{(i)}(\theta_j) $$。
 
  $$ 
 \begin{aligned}
@@ -621,7 +613,7 @@ To demonstrate the deeper connection between Reptile and MAML, let's expand the 
 \end{aligned}
  $$ 
 
-According to the [early section](#first-order-maml), the gradient of FOMAML is the last inner gradient update result. Therefore, when k=1:
+如[前面章节](#first-order-maml)所述，FOMAML 的梯度是最后一次内循环梯度更新的结果。因此，当 k=1 时：
 
  $$ 
 \begin{aligned}
@@ -630,18 +622,18 @@ g_\text{MAML} &= \nabla_{\theta_1} \mathcal{L}^{(1)}(\theta_1) \cdot (I - \alpha
 \end{aligned}
  $$ 
 
-The Reptile gradient is defined as:
+Reptile的梯度则定义为：
 
  $$ 
 g_\text{Reptile} = (\theta_0 - \theta_2) / \alpha = g^{(0)}_0 + g^{(1)}_1
  $$ 
 
 
-Up to now we have:
+现在，我们可以得到：
 
 ![Reptile vs FOMAML]({{ '/assets/images/2019-09-19-meta-learning/reptile_vs_FOMAML.png' | relative_url }})
 {: style="width: 50%;" class="center"}
-*Fig. 15. Reptile versus FOMAML in one loop of meta-optimization. (图像来源：[slides](https://www.slideshare.net/YoonhoLee4/on-firstorder-metalearning-algorithms) on Reptile by Yoonho Lee.)*
+*Fig. 15. Reptile 和 FOMAML 在一次外循环里的元优化方式对比. (图像来源：[slides](https://www.slideshare.net/YoonhoLee4/on-firstorder-metalearning-algorithms) on Reptile by Yoonho Lee.)*
 
  $$ 
 \begin{aligned}
@@ -652,13 +644,13 @@ g_\text{Reptile} &= g^{(0)}_0 + g^{(1)}_1
  $$ 
 
 
-Next let's try further expand $$ g^{(1)}_1 $$ using [Taylor expansion](https://en.wikipedia.org/wiki/Taylor_series). Recall that Taylor expansion of a function $$ f(x) $$ that is differentiable at a number $$ a $$ is:
+接下来，我们对 $$ g^{(1)}_1 $$ 使用 [泰勒展开](https://en.wikipedia.org/wiki/Taylor_series)。对一个可微函数 $$ f(x) $$ 进行 $$ a $$ 阶展开的式子为：
 
  $$ 
 f(x) = f(a) + \frac{f'(a)}{1!}(x-a) + \frac{f''(a)}{2!}(x-a)^2 + \dots = \sum_{i=0}^\infty \frac{f^{(i)}(a)}{i!}(x-a)^i
  $$ 
 
-We can consider $$ \nabla_{\theta}\mathcal{L}^{(1)}(.) $$ as a function and $$ \theta_0 $$ as a value point. The Taylor expansion of $$ g_1^{(1)} $$ at the value point $$ \theta_0 $$ is:
+我们把 $$ \nabla_{\theta}\mathcal{L}^{(1)}(.) $$ 看做一个函数，把 $$ \theta_0 $$ 看做自变量。 $$ g_1^{(1)} $$ 在 $$ \theta_0 $$ 处的泰勒展开为：
 
  $$ 
 \begin{aligned}
@@ -669,8 +661,7 @@ g_1^{(1)} &= \nabla_{\theta}\mathcal{L}^{(1)}(\theta_1) \\
 \end{aligned}
  $$ 
 
-
-Plug in the expanded form of $$ g_1^{(1)} $$ into the MAML gradients with one step inner gradient update:
+把 MAML 的一步内循环梯度更新用 $$ g_1^{(1)} $$ 的展开式重写：
 
  $$ 
 \begin{aligned}
@@ -683,7 +674,7 @@ g_\text{MAML} &= g^{(1)}_1 - \alpha H^{(0)}_0 g^{(1)}_1 \\
  $$ 
 
 
-The Reptile gradient becomes:
+Reptile的梯度变为：
 
  $$ 
 \begin{aligned}
@@ -694,7 +685,7 @@ g_\text{Reptile}
  $$ 
 
 
-So far we have the formula of three types of gradients:
+现在，我们有了三种不同的梯度更新法则：
 
  $$ 
 \begin{aligned}
@@ -704,15 +695,14 @@ g_\text{Reptile}  &= g^{(0)}_0 + g_0^{(1)} - \alpha H^{(1)}_0 g_0^{(0)} + O(\alp
 \end{aligned}
  $$ 
 
+在训练过程中，我们经常会对多个数据batch做平均。在我们的例子中，小batch (0) 和 (1)是可交换的， 因为他们都是随机选取的。期望 $$ \mathbb{E}_{\tau,0,1} $$ 表示在任务$$ \tau $$上，两个标号为 (0) 和 (1) 的数据batch的平均值。
 
-During training, we often average over multiple data batches. In our example, the mini batches (0) and (1) are interchangeable since both are drawn at random. The expectation $$ \mathbb{E}_{\tau,0,1} $$ is averaged over two data batches, ids (0) and (1), for task $$ \tau $$ .
+令,
 
-Let,
-- $$ A = \mathbb{E}_{\tau,0,1} [g_0^{(0)}] = \mathbb{E}_{\tau,0,1} [g_0^{(1)}] $$ ; it is the average gradient of task loss. We expect to improve the model parameter to achieve better task performance by following this direction pointed by $$ A $$ .
-- $$ B = \mathbb{E}_{\tau,0,1} [H^{(1)}_0 g_0^{(0)}] = \frac{1}{2}\mathbb{E}_{\tau,0,1} [H^{(1)}_0 g_0^{(0)} + H^{(0)}_0 g_0^{(1)}] = \frac{1}{2}\mathbb{E}_{\tau,0,1} [\nabla_\theta(g^{(0)}_0 g_0^{(1)})] $$ ; it is the direction (gradient) that increases the inner product of gradients of two different mini batches for the same task. We expect to improve the model parameter to achieve better generalization over different data by following this direction pointed by $$ B $$ .
+- $$ A = \mathbb{E}_{\tau,0,1} [g_0^{(0)}] = \mathbb{E}_{\tau,0,1} [g_0^{(1)}] $$ ; 代表着任务loss的平均梯度。沿着 $$ A $$ 代表的方向更新模型，能够使模型在当前任务上的表现更好。
+- $$ B = \mathbb{E}_{\tau,0,1} [H^{(1)}_0 g_0^{(0)}] = \frac{1}{2}\mathbb{E}_{\tau,0,1} [H^{(1)}_0 g_0^{(0)} + H^{(0)}_0 g_0^{(1)}] = \frac{1}{2}\mathbb{E}_{\tau,0,1} [\nabla_\theta(g^{(0)}_0 g_0^{(1)})] $$ ; 代表着增加同个任务上两个小batch梯度的内积的方向。沿着 $$ B $$ 代表的方向更新模型，能够使得模型在当前任务上具有更好的泛化性。
 
-
-To conclude, both MAML and Reptile aim to optimize for the same goal, better task performance (guided by A) and better generalization (guided by B), when the gradient update is approximated by first three leading terms. 
+综上所述， MAML 和 Reptile 的优化目标相同，都是更好的任务表现（由 A 主导）和更好的泛化能力（由 B 主导）。当梯度更新由泰勒展开的前三项近似时：
 
  $$ 
 \begin{aligned}
@@ -722,11 +712,11 @@ To conclude, both MAML and Reptile aim to optimize for the same goal, better tas
 \end{aligned}
  $$ 
 
-It is not clear to me whether the ignored term $$ O(\alpha^2) $$ might play a big impact on the parameter learning. But given that FOMAML is able to obtain a similar performance as the full version of MAML, it might be safe to say higher-level derivatives would not be critical during gradient descent update.
+虽然我们没法确定忽略的 $$ O(\alpha^2) $$ 项是否对于参数更新有着重要作用。但根据 FOMAML 与 MAML 的表现相近来看，说高阶导数对于梯度更新不太重要还是比较靠谱的。
 
 ---
 
-Cited as:
+引用本文:
 
 ```
 @article{weng2018metalearning,
@@ -738,12 +728,12 @@ Cited as:
 }
 ```
 
-*If you notice mistakes and errors in this post, don't hesitate to leave a comment or contact me at [lilian dot wengweng at gmail dot com] and I would be very happy to correct them asap.*
+*如果你发现本文章有错误，欢迎联系作者（lilian dot wengweng at gmail dot com）或译者（phi.wth at gmail dot com）。非常感谢！*
 
-See you in the next post!
+敬请期待更多文章！
 
 
-## Reference
+## 引用
 
 [1] Brenden M. Lake, Ruslan Salakhutdinov, and Joshua B. Tenenbaum. ["Human-level concept learning through probabilistic program induction."](https://www.cs.cmu.edu/~rsalakhu/papers/LakeEtAl2015Science.pdf) Science 350.6266 (2015): 1332-1338.
 
