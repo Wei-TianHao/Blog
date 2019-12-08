@@ -18,9 +18,9 @@
 
     <title>OSVOS跟进</title>
 
-    <meta name="description" content="没啥好说的。">
+    <meta name="description" content="Document my learning notes.">
 
-    <meta content="TH的自言自语" property="og:site_name">
+    <meta content="TH的小声bbox" property="og:site_name">
     
         <meta content="OSVOS跟进" property="og:title">
     
@@ -28,10 +28,10 @@
         <meta content="article" property="og:type">
     
     
-        <meta content="没啥好说的。" property="og:description">
+        <meta content="Document my learning notes." property="og:description">
     
     
-        <meta content="http://localhost:4000/%E8%AE%BA%E6%96%87/2017/06/05/OSVOS%E8%B7%9F%E8%BF%9B.html" property="og:url">
+        <meta content="http://localhost:4000/deleted/2017-06-05-OSVOS%E8%B7%9F%E8%BF%9B.html" property="og:url">
     
     
         <meta content="2017-06-05T10:00:00+08:00" property="article:published_time">
@@ -39,12 +39,10 @@
     
     
     
-        
-    
 
     <link rel="shortcut icon" href="/blog/assets/images/favicon.png">
     <link rel="stylesheet" href="/blog/assets/css/main.css">
-    <link rel="canonical" href="http://localhost:4000/blog/%E8%AE%BA%E6%96%87/2017/06/05/OSVOS%E8%B7%9F%E8%BF%9B.html">
+    <link rel="canonical" href="http://localhost:4000/blog/deleted/2017-06-05-OSVOS%E8%B7%9F%E8%BF%9B.html">
 
     <!-- For Latex -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
@@ -79,11 +77,7 @@
     <meta name="twitter:title"   content="OSVOS跟进">
 
     
-        <meta name="twitter:description" content="<blockquote>
-  <p>没啥好说的。</p>
-</blockquote>
-
-">
+        <meta name="twitter:description" content="Document my learning notes.">
     
 
     
@@ -101,7 +95,7 @@
 
     <div class="wrapper">
         
-        <a class="site-title" href="/blog/">TH的自言自语</a>
+        <a class="site-title" href="/blog/">TH的小声bbox</a>
 
         <!-- <nav class="site-nav">
             <a class="page-link" href="https://wei-tianhao.github.io" target="_blank">&#x1f349; About</a>
@@ -117,11 +111,11 @@
         </nav> -->
 
         <nav class="site-nav">
-            <a class="page-link" href="/blog/contact.html">&#x57;关于我</a>
+            <a class="page-link" href="/blog/contact.html">关于我</a>
         </nav>
-        <nav class="site-nav">
+        <!-- <nav class="site-nav">
             <a class="page-link" href="/blog/FAQ.html">FAQ</a>
-        </nav>
+        </nav> -->
         <nav class="site-nav">
             <a class="page-link" href="/blog/archive.html">归档</a>
         </nav>
@@ -168,7 +162,7 @@ var currentScrollPos = window.pageYOffset;
       <span class="share-buttons">
         <span class="share-button"><a class="twitter-share-button" href="https://twitter.com/share" data-show-count="false">Tweet</a><script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script></span>
 
-        <span class="share-button"><span class="fb-like" data-href="/%E8%AE%BA%E6%96%87/2017/06/05/OSVOS%E8%B7%9F%E8%BF%9B.html" data-layout="button_count" data-action="like" data-size="small" data-show-faces="false" data-share="true"></span></span>
+        <span class="share-button"><span class="fb-like" data-href="/deleted/2017-06-05-OSVOS%E8%B7%9F%E8%BF%9B.html" data-layout="button_count" data-action="like" data-size="small" data-show-faces="false" data-share="true"></span></span>
       </span>
       <div style="clear: both;"/>
       -->
@@ -189,11 +183,11 @@ var currentScrollPos = window.pageYOffset;
 
 <p>该篇论文提出的方法是模拟人类在视频中追踪物体的情形，人们在视频追踪的时候分为两种情形，一种是连续的画面，那很自然的就由上一帧的物体所在点过渡过来；但是当漏了几秒没看的时候，人们是怎么识别物体的呢？这就是该篇论文的出发点，语义分析追踪。即我第一帧看到了车，在画面不能连续起来的时候我就去找“车”这个语义在图片哪里。</p>
 
-<p>对于第一帧图片使用FCN对图片中的各种物体做出像素级预测，然后寻找与mask重合最多的预测，比如说是car。对后面的帧预测的时候，即可先对图片做语义分割，然后找语义为car的预测，在于上一帧的mask结合，做出预测。总体结构如下<img src="../assets/images/2017-06-05-OSVOS跟进/屏幕快照 2017-06-05 上午12.15.02.png" alt="屏幕快照 2017-06-05 上午12.15.02" /></p>
+<p>对于第一帧图片使用FCN对图片中的各种物体做出像素级预测，然后寻找与mask重合最多的预测，比如说是car。对后面的帧预测的时候，即可先对图片做语义分割，然后找语义为car的预测，在于上一帧的mask结合，做出预测。总体结构如下<img src="/blog/assets/images/2017-06-05-OSVOS%E8%B7%9F%E8%BF%9B/%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7%202017-06-05%20%E4%B8%8A%E5%8D%8812.15.02.png" alt="屏幕快照 2017-06-05 上午12.15.02" /></p>
 
 <p>论文还提出了一个conditional classifier layer，主要功能是视情况结合propagation的结果和semantic segmentation的结果。比如物体移动非常剧烈的时候只采用semantic segmentation，放弃propagation的mask；而又多个相同语义的物体时则要侧重于propagation的结果（具体实现以后还要再看下）。</p>
 
-<p><img src="../assets/images/2017-06-05-OSVOS跟进/屏幕快照 2017-06-05 上午12.17.36.png" alt="屏幕快照 2017-06-05 上午12.17.36" /></p>
+<p><img src="/blog/assets/images/2017-06-05-OSVOS%E8%B7%9F%E8%BF%9B/%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7%202017-06-05%20%E4%B8%8A%E5%8D%8812.17.36.png" alt="屏幕快照 2017-06-05 上午12.17.36" /></p>
 
 <p>这篇论文我觉的最符合人类的直观认识，不知道还能不能再从这方面深入挖掘一下。</p>
 
@@ -211,19 +205,19 @@ var currentScrollPos = window.pageYOffset;
   <li>前景背景结合</li>
 </ol>
 
-<p><img src="../assets/images/2017-06-05-OSVOS跟进/屏幕快照 2017-06-04 下午11.54.18.png" alt="屏幕快照 2017-06-04 下午11.57.37" /></p>
+<p><img src="/blog/assets/images/2017-06-05-OSVOS%E8%B7%9F%E8%BF%9B/%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7%202017-06-04%20%E4%B8%8B%E5%8D%8811.54.18.png" alt="屏幕快照 2017-06-04 下午11.57.37" /></p>
 
 <p>作者用一帧生成<script type="math/tex">10^3</script>级别的训练数据，效果相同的情形下数据量仅为原来的<script type="math/tex">\frac1{100}</script>到<script type="math/tex">\frac1{20}</script>。这种数据生成是跟网络完全独立的，可以用在以后的训练中。</p>
 
 <p>作者训练用的模型是结合上一帧的mask与optical flow的模型，不是本文研究的重点，简要介绍了一下。</p>
 
-<p><img src="../assets/images/2017-06-05-OSVOS跟进/屏幕快照 2017-06-04 下午11.57.37.png" alt="屏幕快照 2017-06-04 下午11.57.37" /></p>
+<p><img src="/blog/assets/images/2017-06-05-OSVOS%E8%B7%9F%E8%BF%9B/%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7%202017-06-04%20%E4%B8%8B%E5%8D%8811.57.37.png" alt="屏幕快照 2017-06-04 下午11.57.37" /></p>
 
 <h2 id="learning-video-object-segmentation-from-static-images">Learning Video Object Segmentation from Static Images</h2>
 
 <p>这篇论文提出将视频vido object segmentation看做是guided instance segmentation。本文的模型是先用静态图像预训练convnet，再由视频中的前几帧引导，生成高精确度的分割。</p>
 
-<p><img src="../assets/images/2017-06-05-OSVOS跟进/屏幕快照 2017-06-03 下午12.08.47.png" alt="屏幕快照 2017-06-03 下午12.08.47" /></p>
+<p><img src="/blog/assets/images/2017-06-05-OSVOS%E8%B7%9F%E8%BF%9B/%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7%202017-06-03%20%E4%B8%8B%E5%8D%8812.08.47.png" alt="屏幕快照 2017-06-03 下午12.08.47" /></p>
 
 <p>模型的关键在于离线和在线算法的结合，离线算法用于学习物体的特征，在线算法refine mask。大步骤跟OSVOS基本一致，但本质思想不同</p>
 
@@ -251,7 +245,7 @@ var currentScrollPos = window.pageYOffset;
 
 <p>第二步的实际训练方式是先将前一帧的mask做一些形态学变换模拟各种噪声，增大数据量，同时使用图片识别的mask进行一些形态学变换，来模拟前一帧与当前帧的差异。这样就可以使用图片识别的数据集进行训练，数据量大大提升。）</p>
 
-<p><img src="../assets/images/2017-06-05-OSVOS跟进/屏幕快照 2017-06-03 下午12.09.00.png" alt="屏幕快照 2017-06-03 下午12.09.00" /></p>
+<p><img src="/blog/assets/images/2017-06-05-OSVOS%E8%B7%9F%E8%BF%9B/%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7%202017-06-03%20%E4%B8%8B%E5%8D%8812.09.00.png" alt="屏幕快照 2017-06-03 下午12.09.00" /></p>
 
 <p>作者还提出了几种guidence的变体，有box annotation和optical flow</p>
 
@@ -263,7 +257,7 @@ var currentScrollPos = window.pageYOffset;
 
 <p>该网络先学习许多背景的采样，再跟原视频结合，达到更好的消除效果，称为global attenuation</p>
 
-<p><img src="../assets/images/2017-06-05-OSVOS跟进/屏幕快照 2017-06-05 上午12.25.38.png" alt="屏幕快照 2017-06-05 上午12.25.38" /></p>
+<p><img src="/blog/assets/images/2017-06-05-OSVOS%E8%B7%9F%E8%BF%9B/%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7%202017-06-05%20%E4%B8%8A%E5%8D%8812.25.38.png" alt="屏幕快照 2017-06-05 上午12.25.38" /></p>
 
 <p>感觉这个问题与video object segmentation差别比较大，因为人的大小基本恒定，而且背景一般是静态的。该网络对于动态背景的表现很差。</p>
 
@@ -273,7 +267,7 @@ var currentScrollPos = window.pageYOffset;
 
 <p>在HED中，深层的side outputs主要用于定位，浅层的side outputs主要用于表达细节，这启发了作者使用short connections在HED内部构建skip-layer，更好的结合深层与浅层的能力。下图的c和d是作者提出的模型。（以下暂称SCHED(short connected HED)，作者没给官方简称…）</p>
 
-<p><img src="../assets/images/2017-06-05-OSVOS跟进/屏幕快照 2017-06-04 下午9.59.57.png" alt="屏幕快照 2017-06-04 下午9.59.57" /></p>
+<p><img src="/blog/assets/images/2017-06-05-OSVOS%E8%B7%9F%E8%BF%9B/%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7%202017-06-04%20%E4%B8%8B%E5%8D%889.59.57.png" alt="屏幕快照 2017-06-04 下午9.59.57" /></p>
 
 <p>这个网络的具体应用我觉得可以有以下几种途径</p>
 
@@ -298,11 +292,7 @@ var currentScrollPos = window.pageYOffset;
 
   <div class="page-navigation">
     
-      <a class="prev" href="/blog/%E8%AE%BA%E6%96%87/2017/05/26/semantic-segmentation.html">&larr; 语义分割笔记</a>
-    
 
-    
-      <a class="next" href="/blog/2019/09/17/meta-learning.html">元学习: 学习如何学习【译】 &rarr;</a>
     
   </div>
 
